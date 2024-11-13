@@ -1,0 +1,310 @@
+SOMMAIRE DU PROJET SYMFONY
+
+DEVELOPPER LA PARTIE BACK END D'UNE APPLICATION
+====>Préparer l'envirennement et la création d'un projet symfony
+-Installation d’une stack AMP : Apache, MySQL, PHP
+-Installer Apache2
+- Installer MysQL
+-Installer PHP
+-Configurer la stack AMP
+=====>Création d'un projet Symfony avec Composer
+-structure des dossiers
+-Fichiers important
+-Lancement de l'application
+====> Développer sa première 
+====> Aborder un nouveau projet
+-Comprendre et modéliser le brief client
+-Introduction à la méthode Merise
+=====>Introduction à Doctrine
+-Installer Doctrine
+=============================================================================
+CREATION DU PROJET SYMFONY AVEC Composer
+Avant de commencer à installer un projet Symfony, il faut connaître deux choses essentielles. La première, c'est qu'on a besoin d'un gestionnaire de dépendances, 
+ici ce sera Composer. Composer est un gestionnaire qui permet d’installer les dépendances en PHP.
+
+Qu'est-ce qu'une dépendance ou un composant ?
+Il s'agit simplement d’un dossier public sur GitHub par exemple, souvent open source, contenant des classes en PHP et d'autres fichiers (configuration, arborescence, etc.).
+ Grâce à Composer, on va pouvoir télécharger ces fichiers et les inclure dans notre projet. Cela nous évite de "réinventer la roue" en réutilisant les classes créées par d'autres,
+  pour la connexion, l'inscription, l'envoi d’e-mails, etc. C’est un des grands avantages de Symfony, qui nous permet de gagner du temps en développement.
+
+Pour installer Symfony, j'ai besoin de Composer, mais aussi d'un binaire appelé Symfony CLI (Command Line Interface) qui ajoute des outils supplémentaires que Composer seul ne propose pas.
+ Par exemple, Symfony CLI permet de vérifier l’environnement de l'ordinateur pour s’assurer qu’il peut supporter un projet Symfony et de gérer le déploiement en ligne. 
+ Pour installer Symfony CLI, il suffit de se rendre sur la page officielle (symfony.com/download) et de suivre les instructions pour Linux, macOS ou Windows.
+
+Composer doit aussi être installé :
+Sous Windows, il faut télécharger et exécuter le binaire depuis le site officiel de Composer. Sur Linux et macOS, une commande terminal suffit (brew install composer pour macOS).
+
+Une fois les deux binaires installés, en tapant symfony ou composer dans le terminal, vous verrez toutes les commandes disponibles. Sur Windows, ouvrez l'invite de commande (Windows + R, puis tapez cmd) 
+et entrez les commandes.
+
+Pour vérifier la compatibilité du système, la commande symfony check:requirements est très utile. Elle vérifie les extensions PHP nécessaires et la configuration, et s'assure qu'Apache est installé si besoin.
+
+Créer un projet Symfony
+Vous pouvez utiliser la commande symfony new <nom_du_projet> --version=5.4 --webapp ou composer create-project symfony/website-skeleton <nom_du_projet> "^5.4".
+ La version 5.4 de Symfony est une LTS (Long Term Support) maintenue pendant 4 ans. Les versions plus récentes, comme 6.3 et 6.4, sont encore en développement et n'ont pas encore de support à long terme.
+
+Dans Symfony, il existe deux types de bases de projet :
+
+Skeleton - une base minimale pour démarrer.
+Website Skeleton - une base plus complète avec des composants supplémentaires (Twig, Doctrine, etc.).
+Structure du projet Symfony
+
+bin/ : contient les binaires, notamment le fichier console, qui permet d’utiliser différentes commandes utiles durant le développement.
+config/ : réunit tous les fichiers de configuration, aussi bien pour Symfony que pour les composants ajoutés avec Composer.
+public/ : contient les ressources accessibles publiquement comme le JavaScript, les images, et la page d'accueil accessible via un navigateur.
+src/ : le dossier principal de développement où se trouvent le code PHP, les routes, et la logique métier.
+var/ : stockage des logs, du cache, et des sessions ; il est géré automatiquement par le serveur.
+vendor/ : contient toutes les dépendances installées via Composer.
+Les fichiers principaux
+
+.env : pour stocker les informations de connexion à la base de données et d'autres configurations sensibles.
+.env.local : version locale de .env qui n'est pas versionnée pour protéger les informations sensibles.
+.gitignore : fichier de configuration pour Git permettant d’ignorer certains fichiers et dossiers à ne pas envoyer sur GitHub.
+Cette structure offre une base solide pour un développement efficace et une bonne gestion de la configuration.
+============================================================================================================================
+DEVELOPPER SA PREMIERE page
+Structure du Projet - Création de la Première URL
+Dossier de Travail
+Nous sommes maintenant sur notre projet RestaurantPtitCa. Pour commencer, accédez au dossier src, où nous développerons la logique métier du projet. À l’intérieur, vous trouverez deux éléments principaux :
+
+Controller : où nous écrirons notre code.
+Kernel : fichier de base, premier point d’entrée lorsque la requête arrive dans index.php, situé dans le dossier public.
+Rôle de Kernel
+Le fichier index.php reçoit les requêtes d'Apache, crée une instance de Kernel, qui lui-même charge les configurations du projet et initialise tous les fichiers nécessaires.
+
+Création d'une Classe Contrôleur
+Dans le dossier src, le répertoire Controller contiendra notre logique de contrôle. Nous allons y créer une classe en PHP nommée DefaultController.
+
+Organisation des Noms
+Notre projet utilise la convention PSR-4 pour les noms d’espaces (namespace). En PHP, les classes de contrôleurs suivent le standard "PascalCase", c’est-à-dire que chaque mot commence par une majuscule.
+
+Dans notre cas, la classe s’appellera donc DefaultController et utilisera le namespace App\Controller. Ce namespace est défini automatiquement par Symfony, car src est équivalent à App dans le fichier composer.json.
+
+Héritage de la Classe AbstractController
+Pour que DefaultController soit un contrôleur, elle doit hériter de la classe AbstractController. Cette dernière se trouve dans Symfony\Bundle\FrameworkBundle\Controller, 
+dans le dossier vendor. Elle nous fournit des méthodes pratiques, comme la redirection, l’envoi de JSON, et bien d'autres.
+
+Création d'une Méthode dans le Contrôleur
+À l'intérieur de DefaultController, créons une fonction publique nommée home. Elle renverra une réponse à l’utilisateur, qui, dans ce cas, sera un simple message "Bonjour".
+
+Gestion des Noms de Classes et de Méthodes
+Assurez-vous d’utiliser le namespace Symfony\Component\HttpFoundation\Response pour la classe Response, afin d’éviter les conflits avec d'autres classes portant le même nom.
+
+Lier la Route à la Méthode
+Pour associer l'URL à notre fonction home, nous utiliserons des annotations (ou des attributs en PHP 8). Voici la syntaxe de base :
+
+php
+Copier le code
+use Symfony\Component\Routing\Annotation\Route;
+
+class DefaultController extends AbstractController
+{
+    /**
+     * @Route("/", name="home")
+     */
+    public function home(): Response
+    {
+        return new Response("Bonjour");
+    }
+}
+Ici, nous avons défini une route "/" sans paramètres requis, sans options de sécurité, et sans méthode HTTP spécifique.
+
+Démarrer le Serveur
+Pour voir le résultat de notre travail, démarrons le serveur Symfony en exécutant la commande suivante :
+
+bash
+Copier le code
+symfony server:start
+Le serveur tournera sur http://127.0.0.1:8000. En accédant à cette adresse, vous verrez la réponse "Bonjour".
+
+Accéder à une Autre Route
+Si nous ajoutons une nouvelle route, par exemple /toto, il nous faudra actualiser l'URL pour voir la nouvelle réponse associée.
+
+Conclusion
+Nous avons créé notre première route associée à la racine de notre site. À l'avenir, la méthode home pourra renvoyer d'autres types de réponses, comme du HTML via Twig, ou du JSON dans le cadre d'une API.
+============================================================================================
+Introduction :
+
+Aujourd'hui, nous sommes réunis pour une nouvelle vidéo où nous allons aborder la création d'une base de données sous l'angle de la modélisation. Nous utiliserons les méthodes MERISE en partant du cahier des charges fourni avec le projet. Ce projet, nommé "Projet Restaurant", servira de fil rouge tout au long de ce cours.
+
+Étapes de création de la base de données :
+
+Analyse du cahier des charges
+Avant toute chose, il est essentiel de bien comprendre le projet pour concevoir une base de données adaptée. Le cahier des charges détaille les différentes fonctionnalités et la logique métier du projet, comme :
+
+Les utilisateurs du site : administrateurs et clients.
+Les services offerts, comme la réservation de tables.
+Les informations spécifiques requises, comme les horaires d'ouverture, la capacité maximale de convives, les images du restaurant, etc.
+Création de la table "Utilisateur" (User)
+La table "Utilisateur" est essentielle pour enregistrer les informations des administrateurs et des clients :
+
+Champs requis : prénom, nom, adresse email, mot de passe sécurisé.
+Rôles : client ou administrateur.
+Autres informations : nombre de convives, mention d’allergies, etc.
+Le champ "Roles" permet de distinguer les administrateurs des clients. Le nombre de convives et les allergies sont nécessaires pour le service de réservation.
+
+Informations du restaurant
+Pour gérer les informations du restaurant, nous inclurons :
+
+Les horaires d'ouverture et de fermeture sous forme de colonnes.
+La capacité maximale de convives (champ "max_guest").
+Une galerie d’images avec un titre, un lien vers la photo, et des dates de création et de mise à jour.
+Gestion de la carte du restaurant
+La carte du restaurant sera structurée en plusieurs tables :
+
+Table "Catégorie" : pour différencier les types de plats (entrée, dessert, plat, etc.).
+Table "Plat" : avec des champs pour le titre, la description et le prix.
+Table "Menu" : incluant les plats associés.
+Module de réservation
+La réservation permettra aux clients de renseigner :
+
+Le nombre de couverts souhaités.
+La date et l'heure de la réservation.
+D'éventuelles allergies.
+Conception et optimisation de la base de données
+La conception de la base de données est une étape cruciale pour la performance du projet. Une bonne organisation des tables et des relations entre elles évite les pertes de performance et facilite les requêtes SQL nécessaires au fonctionnement de l'application.
+
+Modélisation avec la méthode MERISE :
+
+Nous utiliserons la méthode MERISE pour structurer notre base de données en plusieurs modèles :
+
+Modèle Conceptuel de Données (MCD) : pour identifier les entités et leurs relations.
+Modèle Logique de Données (MLD) : pour définir les types de données et les clés primaires/étrangères.
+Modèle Physique de Données (MPD) : pour traduire la structure en code SQL.
+Des outils comme Open ModelSphere, Draw.io, ou Quick Database Diagrams peuvent être utilisés pour la modélisation. Ces outils permettent de visualiser les tables, les relations, et d'exporter le schéma final en SQL.
+
+Conclusion :
+
+Pour notre projet de restaurant, la base de données est l'élément fondamental. Elle doit être bien conçue dès le départ pour éviter des complications futures. La méthode MERISE et les outils de modélisation facilitent la visualisation et l'optimisation de la structure des tables.
+===================================================================================================================
+LANGUATION SQL DE LA TABLE 
+User 
+-
+  id pk int
+  uuid CHAR(36)
+  firstName varchar(32)
+  lastName varchar(64)
+  email varchar(64) 
+  password varchar(255) 
+  roles json 
+  guestNumber smallInt?
+  allergies varchar(255)?
+  createdAt dateTime
+  update dateTime
+
+
+Restaurant
+-
+ id PK int
+ uuid CHAR(36)
+  name varchar(32)
+  description Longtext
+  amOpeningtime json
+  pmOpeningtime json
+  maxguest smallInt?
+  createdAt dateTime
+  update dateTime
+  Owner ONE_TO_ONE FK >- User.id
+  
+Picture
+-
+  id PK int
+  titre CHAR(128)
+  slug CHAR(128)
+  createdAt dateTime
+  update dateTime
+  Restaurant MANY_TO_ONE FK >- Restaurant.id
+==============================================================================================================================
+EXPLICATION DU CODE 
+
+Voici une explication détaillée de chaque table et champ dans votre code SQL pour User, Restaurant, et Picture :
+
+Table User
+Cette table contient des informations sur les utilisateurs, probablement des clients ou des propriétaires de restaurant.
+
+id : Identifiant unique de l'utilisateur (clé primaire).
+uuid : Identifiant unique universel (UUID) de 36 caractères, souvent utilisé pour identifier les utilisateurs de manière sécurisée et éviter les conflits d'ID.
+firstName : Prénom de l'utilisateur, avec une limite de 32 caractères.
+lastName : Nom de famille de l'utilisateur, avec une limite de 64 caractères.
+email : Adresse e-mail de l'utilisateur, avec une limite de 64 caractères. Doit être unique pour chaque utilisateur.
+password : Mot de passe de l'utilisateur, stocké sous forme de chaîne cryptée avec une longueur maximale de 255 caractères.
+roles : Stocke les rôles de l'utilisateur dans un format JSON, permettant d'attribuer plusieurs rôles (par exemple, ROLE_USER, ROLE_ADMIN).
+guestNumber : Nombre de personnes pour lesquelles l'utilisateur peut effectuer une réservation. C'est un nombre entier de petite taille (smallInt) qui peut être nul (?).
+allergies : Informations sur les allergies de l'utilisateur, sous forme de chaîne de caractères de 255 caractères maximum, également optionnelle (?).
+createdAt : Date et heure de création de l'enregistrement de l'utilisateur.
+update : Date et heure de la dernière mise à jour de l'enregistrement de l'utilisateur.
+Table Restaurant
+Cette table stocke des informations sur les restaurants.
+
+id : Identifiant unique du restaurant (clé primaire).
+uuid : Identifiant unique universel (UUID) pour chaque restaurant, permettant une identification unique.
+name : Nom du restaurant, limité à 32 caractères.
+description : Description longue du restaurant (type Longtext), pouvant contenir des informations détaillées.
+amOpeningtime : Horaires d'ouverture du matin, stockés en JSON pour permettre une flexibilité dans les formats d'heures (ex. 09:00-12:00).
+pmOpeningtime : Horaires d'ouverture de l'après-midi, également stockés en JSON.
+maxguest : Nombre maximal de clients pouvant être accueillis dans le restaurant, un smallInt optionnel (?).
+createdAt : Date et heure de création de l'enregistrement du restaurant.
+update : Date et heure de la dernière mise à jour de l'enregistrement du restaurant.
+Owner : Relation de type ONE_TO_ONE vers un enregistrement dans la table User (via User.id), indiquant que chaque restaurant a un propriétaire unique.
+Table Picture
+Cette table gère les images associées aux restaurants, comme les photos d'ambiance ou de plats.
+
+id : Identifiant unique de chaque image (clé primaire).
+titre : Titre ou nom de l'image, limité à 128 caractères.
+slug : Identifiant unique pour chaque image, souvent utilisé pour les URLs, également limité à 128 caractères.
+createdAt : Date et heure de création de l'image.
+update : Date et heure de la dernière mise à jour de l'image.
+Restaurant : Relation MANY_TO_ONE vers un enregistrement dans la table Restaurant (via Restaurant.id), indiquant qu'un restaurant peut avoir plusieurs images associées.
+Relations entre les tables
+User et Restaurant : Relation ONE_TO_ONE avec Owner, signifiant qu'un restaurant a un propriétaire unique qui est un utilisateur, mais chaque utilisateur peut être propriétaire d'un seul restaurant.
+Restaurant et Picture : Relation MANY_TO_ONE, indiquant qu'un restaurant peut être associé à plusieurs images, mais chaque image est liée à un seul restaurant.
+En résumé, ces tables définissent un modèle pour une application de réservation de restaurant avec des informations sur les utilisateurs, les restaurants qu'ils possèdent, et les images associées à chaque restaurant.
+============================================================================================
+INTRODUCTION A Doctrine
+INSTALLATION A Doctrine
+symfony check:requirements
+symfony new my_project_directory --version="5.4.*"
+composer require symfony/orm-pack
+composer require --dev symfony/maker-bundle
+composer update
+===================================================================================
+CONFIGURER Doctrine AVEC LE FICHIER .env
+Introduction
+Bonjour, aujourd'hui, nous allons voir comment configurer globalement votre projet Symfony à partir de certains fichiers essentiels. Nous aborderons également la création d'une base de données via Symfony en ligne de commande, ainsi que la création des tables et d'autres éléments dans les cours suivants. L'objectif est de configurer votre projet Symfony de manière à ce qu'il puisse communiquer avec une base de données SQL.
+
+Configuration de la connexion à la base de données
+Pré-requis :
+
+Assurez-vous d'avoir MySQL (version 8 minimum) installé sur votre système.
+La connexion à MySQL se fait via un utilisateur et un mot de passe spécifiques que vous devez bien retenir, car nous en aurons besoin pour configurer la connexion à la base de données.
+Fichier .env :
+
+Ce fichier contient les variables d’environnement de votre projet, comme les identifiants de connexion à la base de données. Cependant, étant donné que .env est versionné (suivi par Git), toute modification y est enregistrée, ce qui peut poser un problème de sécurité si des informations sensibles, comme des mots de passe, sont exposées.
+Sécuriser les variables sensibles :
+
+Pour éviter cela, nous allons utiliser un fichier .env.local, qui surcharge les valeurs du fichier .env mais n'est pas suivi par Git. Ainsi, vous pouvez y placer vos informations confidentielles en toute sécurité.
+Exemple de connexion avec MySQL
+Dans le fichier .env, définissez une variable DATABASE_URL sans les informations sensibles. Ensuite, dans le fichier .env.local, ajoutez les valeurs exactes, comme l'utilisateur, le mot de passe et le nom de la base de données. Par exemple :
+
+env
+Copier le code
+DATABASE_URL="mysql://utilisateur:mot_de_passe@127.0.0.1:3306/nom_base_de_donnees"
+Création de la base de données avec Symfony
+Commandes :
+Pour créer la base de données, utilisez la commande suivante dans le terminal :
+bash
+Copier le code
+php bin/console doctrine:database:create
+Cette commande vérifiera si les informations dans DATABASE_URL permettent de créer la base de données.
+Vérification de la création :
+Pour vérifier si la base de données a bien été créée, vous pouvez utiliser MySQL avec la commande SHOW DATABASES; ou un outil comme PHPMyAdmin.
+Suppression de la base de données
+Pour supprimer la base de données, exécutez la commande :
+
+bash
+Copier le code
+php bin/console doctrine:database:drop --force
+Cette option --force est nécessaire pour confirmer la suppression, car c'est une action irréversible.
+
+Conclusion
+En suivant ces étapes, vous avez appris à configurer la connexion à une base de données de manière sécurisée et à créer la base de données via Symfony en ligne de commande.
