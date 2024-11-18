@@ -17,6 +17,24 @@ DEVELOPPER LA PARTIE BACK END D'UNE APPLICATION
 -Introduction à la méthode Merise
 =====>Introduction à Doctrine
 -Installer Doctrine
+-Configurer Doctrine avec le fichier .env
+===>Créer notre première table
+===>CREER NOTRE PREMIRE TABLE
+-Créer un entité Doctrine
+-Migrer votre entité en base
+===>CREER ET LIER NOS AUTRES ENTITES
+-Lier vos entités avec des relations
+-La relation 1-1, One-To-One
+-La relation 1-n / n-1, One-To-Many / Many-To-One
+-La relation n-n / Many-To-Many
+===>Mettre en place l'interface utilisateur
+contenu
+-Créer un controller
+-Créer une route
+-Configurer une route
+===>Mettre en place un CRUD
+
+
 =============================================================================
 CREATION DU PROJET SYMFONY AVEC Composer
 Avant de commencer à installer un projet Symfony, il faut connaître deux choses essentielles. La première, c'est qu'on a besoin d'un gestionnaire de dépendances, 
@@ -269,6 +287,7 @@ composer require --dev symfony/maker-bundle
 composer update
 ===================================================================================
 CONFIGURER Doctrine AVEC LE FICHIER .env
+
 Introduction
 Bonjour, aujourd'hui, nous allons voir comment configurer globalement votre projet Symfony à partir de certains fichiers essentiels. Nous aborderons également la création d'une base de données via Symfony en ligne de commande, ainsi que la création des tables et d'autres éléments dans les cours suivants. L'objectif est de configurer votre projet Symfony de manière à ce qu'il puisse communiquer avec une base de données SQL.
 
@@ -308,3 +327,390 @@ Cette option --force est nécessaire pour confirmer la suppression, car c'est un
 
 Conclusion
 En suivant ces étapes, vous avez appris à configurer la connexion à une base de données de manière sécurisée et à créer la base de données via Symfony en ligne de commande.
+=================================================================
+CREER NOTRE PREMIRE TABLE
+Créer un entité Doctrine
+Migrer votre entité en base
+==================================================================
+CREER ET LIER NOS AUTRES ENTITES
+
+-Lier vos entités avec des relations
+Pour l’instant, Doctrine vous permet de créer des entités, de les mapper et d’interagir simplement avec vos données. À ce stade, vous êtes en mesure de créer une table indépendante « Restaurant », et pourquoi pas une table « Picture ». Mais comment lier mes tables entre elles ? Comment peut-on jouer avec nos données ? Par exemple, admettons qu’un utilisateur souhaite sortir tous les produits d’une certaine catégorie ?
+
+C’est ce qu’on appelle une « relation ». Et pour cela, il est crucial de comprendre les 3 types de relations possibles entre les entités. Le type de relation mis en place est relativement important, car il impactera directement la performance de l’application et la façon dont le code fonctionnel sera écrit.
+Une relation 1 pour 1 fait référence à une association entre deux entités où chaque enregistrement dans la première entité est lié à un seul enregistrement dans la deuxième entité, et vice versa.
+
+Mais comment traduire cela en SQL ? Eh bien, une des entités (l’entité « propriétaire ») contiendra une clé étrangère qui fera référence à l’entité associée.
+-La relation 1-1, One-To-One
+Une relation 1 pour 1 fait référence à une association entre deux entités où chaque enregistrement dans la première entité est lié à un seul enregistrement dans la deuxième entité, et vice versa.
+
+Mais comment traduire cela en SQL ? Eh bien, une des entités (l’entité « propriétaire ») contiendra une clé étrangère qui fera référence à l’entité associée.
+-La relation 1-n / n-1, One-To-Many / Many-To-One
+Une relation 1 pour plusieurs (aussi plusieurs pour 1) est la relation la plus courante.
+
+Elle fait référence à une association entre deux entités où chaque enregistrement dans la première entité peut être associé à plusieurs enregistrements d’une autre entité.
+
+Et en SQL ?
+
+L’entité du côté Many contiendra toujours la clé étrangère qui fera référence à l’entité associée.
+
+Par exemple : nous avons une entité « Ecole » qui peut avoir plusieurs « Eleve ».
+
+Alors nous avons Many « Eleve » to One « Ecole ». La clé étrangère sera donc du côté « Eleve 
+-La relation n-n / Many-To-Many
+À l’inverse de la Many To One, cette relation Many To Many nous sert si des enregistrements font références à plusieurs autres enregistrements.
+
+Reprenons le cas précédent des objets « Ecole » et « Eleve ».
+
+Si nos « Eleve » seraient en même temps dans une autre « Ecole » (admettons qu’ils sont dans une école nommée A certains jours et dans une autre école nommée B d’autres jours), il nous faudra retenir en SQL qu’un « Eleve » peut-être dans l’école A, mais également dans l’école B. Et que chaque « Ecole » puisse avoir plusieurs élèves.
+
+Pour cela, Doctrine va créer une table de jointure, nommée « ecole_eleve » qui contiendra les colonnes suivantes :
+
+ecole_id : cette colonne stocke l’identifiant de l’école pour chaque lien entre une école et un élève. Elle est une clé étrangère qui fait référence à la clé primaire de la table école.
+
+eleve_id : cette colonne stocke l’identifiant de l’élève pour chaque lien entre une école et un élève. Elle est une clé étrangère qui fait référence à la clé primaire de la table élève.
+
+Chaque ligne dans cette table de jointure représente une association entre une « Ecole » et un « Eleve ». Donc, si un « Eleve » appartient à plusieurs « Ecole », il y aura plusieurs lignes pour cet « Eleve » dans la table de jointure.
+
+Il est important de noter que Doctrine gère automatiquement la création et la maintenance de cette table de jointure pour vous.
+
+À comprendre également, que ce n’est pas parce qu’une table supplémentaire de jointure a été ajoutée par Doctrine, qu’une entité en plus sera créée.
+===================================================================
+Gestion des Relations entre Entités avec Doctrine et Enregistrement en Base de Données
+
+Création des Entités
+Nous avons d'abord créé une entité Restaurant avec plusieurs attributs représentant différents champs. Cette entité est accompagnée d'une classe Repository qui facilite l'accès aux données via des méthodes comme findBy ou findOneBy. Cela permet de récupérer des informations spécifiques et de créer des méthodes personnalisées pour interagir avec l'entité Restaurant.
+
+Ajout d'une Nouvelle Entité et des Relations
+Une seconde entité Picture a été ajoutée pour modéliser des images associées à un restaurant. Cette entité inclut des champs tels que le titre, le slug (une chaîne unique), et des dates de création et de mise à jour. Une fois cette entité créée, une migration est générée pour refléter ces changements dans la base de données.
+
+Création des Relations
+Nous établissons une relation OneToMany entre Restaurant et Picture, car un restaurant peut être lié à plusieurs images. Cette relation est configurée à l'aide de Doctrine, en ajoutant une foreign key dans l’entité Picture pour référencer l’entité Restaurant. Ainsi, depuis l'entité Restaurant, nous pourrons accéder à toutes les images associées via une collection d'objets Picture.
+
+Types de Relations en Doctrine
+Nous avons discuté des différents types de relations :
+
+OneToOne : Utilisée lorsque chaque instance d'une entité est liée à une seule instance d'une autre entité.
+OneToMany / ManyToOne : Permet à une entité d'être liée à plusieurs instances d'une autre entité (cas de Restaurant et Picture).
+ManyToMany : Utilisée lorsqu'une entité peut être associée à plusieurs instances d'une autre entité, et inversement (ex. : catégorie et produit).
+Ajout des Champs Relationnels et Migrations
+Après la définition des relations, une migration est générée pour mettre à jour le schéma de la base de données. Cela crée la foreign key qui relie les tables Restaurant et Picture. La commande php bin/console make:migration génère une migration SQL, et php bin/console doctrine:migrations:migrate exécute les changements en base.
+
+Insertion et Test des Relations en Base de Données
+Nous avons inséré un enregistrement Restaurant et plusieurs Picture, associant ces images au restaurant via le champ relationnel. Doctrine nous permet d'utiliser les relations établies pour récupérer les images d'un restaurant ou l'inverse.
+
+Ce texte structuré présente une explication claire et ordonnée de la gestion des relations entre les entités Restaurant et Picture avec Doctrine, en incluant la création d'entités, de relations, et les tests de la base de données.
+==================================================================================================
+Mettre en place un CRUD
+1. Introduction
+Dans ce cours, nous allons créer des contrôleurs pour interagir avec la base de données d'un restaurant. Nous avons déjà une entité Restaurant et une relation avec l'entité Picture, permettant d'avoir plusieurs images associées à un restaurant. Nous avons également effectué la migration de la base de données SQL, qui contient ces entités.
+
+Objectifs :
+Créer un contrôleur pour gérer les routes liées aux restaurants.
+Interagir avec la base de données via ces routes.
+2. Création du Contrôleur Restaurant
+a. Structure du Contrôleur
+Un contrôleur est une classe PHP qui est responsable de la gestion des requêtes HTTP et de l'interaction avec les modèles de données (entités, base de données). Les contrôleurs sont généralement situés dans le dossier src/Controller.
+
+Étapes pour créer un contrôleur :
+Manuellement ou via Symfony Maker Bundle :
+
+Vous pouvez créer un contrôleur à la main ou utiliser le Maker Bundle pour générer automatiquement le code du contrôleur.
+Commande pour générer un contrôleur avec Maker Bundle :
+
+Installez d'abord le Maker Bundle si ce n'est pas déjà fait avec la commande suivante :
+bash
+Copier le code
+composer require symfony/maker-bundle
+Ensuite, générez le contrôleur avec cette commande :
+bash
+Copier le code
+php bin/console make:controller RestaurantController
+Cela crée un fichier RestaurantController.php dans le dossier src/Controller.
+
+3. Structure de RestaurantController.php
+Le fichier RestaurantController.php contient une classe qui étend la classe AbstractController. Voici une vue d'ensemble de ce que contiendra le contrôleur :
+
+a. Imports nécessaires
+php
+Copier le code
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+b. Définition des Routes
+Un contrôleur expose des méthodes qui sont liées à des routes spécifiques. Par exemple :
+
+php
+Copier le code
+/**
+ * @Route("/restaurant", name="restaurant_index")
+ */
+public function index(): Response
+{
+    return $this->json(['message' => 'Welcome to the restaurant controller!']);
+}
+Cette méthode index renverra une réponse JSON lorsque vous accédez à /restaurant.
+
+4. Tests de la Route
+a. Lancer le Serveur Symfony
+Pour tester votre contrôleur et voir si la route fonctionne, lancez le serveur Symfony local avec la commande :
+
+bash
+Copier le code
+symfony server:start
+Cela démarre un serveur local sur le port 8000.
+
+b. Accéder à la Route
+Accédez à l'URL suivante dans votre navigateur :
+
+bash
+Copier le code
+http://localhost:8000/restaurant
+Vous devriez voir le message JSON : {"message": "Welcome to the restaurant controller!"}.
+
+5. Création de Méthodes et Routes supplémentaires
+Maintenant que la route de base fonctionne, vous pouvez créer des méthodes supplémentaires pour ajouter, modifier ou supprimer des restaurants. Par exemple :
+
+a. Ajouter un Nouveau Restaurant
+php
+Copier le code
+/**
+ * @Route("/restaurant/new", name="restaurant_new", methods={"POST"})
+ */
+public function new(Request $request): Response
+{
+    // Code pour ajouter un restaurant
+}
+Cette route accepte uniquement les requêtes POST.
+Vous pouvez ensuite récupérer les données du corps de la requête via $request->get('data').
+b. Récupérer un Restaurant
+php
+Copier le code
+/**
+ * @Route("/restaurant/{id}", name="restaurant_show", methods={"GET"})
+ */
+public function show(int $id): Response
+{
+    // Code pour récupérer et afficher un restaurant
+}
+Cette méthode récupère un restaurant par son id.
+c. Modifier un Restaurant
+php
+Copier le code
+/**
+ * @Route("/restaurant/{id}/edit", name="restaurant_edit", methods={"PUT"})
+ */
+public function edit(int $id, Request $request): Response
+{
+    // Code pour modifier un restaurant
+}
+La méthode PUT permet de mettre à jour un restaurant existant.
+6. Conclusion et Récapitulatif
+Vous avez créé un contrôleur pour gérer les restaurants et leurs images.
+Vous avez testé et validé les routes définies pour gérer l'ajout, la modification et la suppression des restaurants.
+Ces routes interagissent avec la base de données via les entités Restaurant et Picture.
+Vous pouvez maintenant étendre ce contrôleur pour ajouter plus de fonctionnalités selon les besoins de votre application.
+
+Cela donne une vision claire et structurée des étapes à suivre pour créer des contrôleurs et interagir avec la base de données dans Symfony.
+
+
+
+
+
+
+Vous avez dit :
+vous avez oublié delete
+ChatGPT a dit :
+ChatGPT
+Vous avez raison, j'ai omis la méthode pour supprimer un restaurant. Voici la méthode delete pour supprimer un restaurant de la base de données.
+
+7. Suppression d'un Restaurant
+Pour ajouter la possibilité de supprimer un restaurant, vous pouvez définir une route qui accepte une requête DELETE. Cette méthode sera utilisée pour supprimer un restaurant en fonction de son id.
+
+a. Méthode delete dans le contrôleur
+php
+Copier le code
+/**
+ * @Route("/restaurant/{id}", name="restaurant_delete", methods={"DELETE"})
+ */
+public function delete(int $id): Response
+{
+    // Récupérer le restaurant à supprimer
+    $restaurant = $this->getDoctrine()->getRepository(Restaurant::class)->find($id);
+
+    // Vérifier si le restaurant existe
+    if (!$restaurant) {
+        return $this->json(['message' => 'Restaurant not found'], Response::HTTP_NOT_FOUND);
+    }
+
+    // Supprimer le restaurant
+    $entityManager = $this->getDoctrine()->getManager();
+    $entityManager->remove($restaurant);
+    $entityManager->flush();
+
+    // Retourner une réponse indiquant la suppression
+    return $this->json(['message' => 'Restaurant deleted successfully'], Response::HTTP_NO_CONTENT);
+}
+====>create
+1. Lister les routes existantes
+Lorsque vous exécutez la commande suivante :
+
+bash
+Copier le code
+php bin/console debug:router
+Vous pouvez visualiser toutes vos routes définies, avec leur méthode HTTP et leur URL associée, comme :
+
+GET /api/restaurant : Afficher les restaurants.
+POST /api/restaurant : Ajouter un nouveau restaurant.
+GET /api/restaurant/{id} : Afficher un restaurant spécifique.
+DELETE /api/restaurant/{id} : Supprimer un restaurant.
+C'est un bon point de départ pour vérifier que vos routes sont bien configurées.
+
+2. Vérification initiale avec des réponses simples
+Avant de connecter vos routes à la base de données, vous pouvez leur associer des réponses simples pour tester leur comportement.
+
+Exemple pour la route GET /api/restaurant :
+Ajoutez un retour JSON statique dans votre contrôleur pour tester la route :
+
+php
+Copier le code
+/**
+ * @Route("/api/restaurant", name="get_restaurants", methods={"GET"})
+ */
+public function getRestaurants(): JsonResponse
+{
+    return $this->json([
+        'message' => 'Route fonctionne',
+        'data' => [],
+    ], Response::HTTP_OK);
+}
+3. Créer des objets en dur avant de les connecter à la base
+Pour la route POST /api/restaurant, commencez par créer un objet en dur avant d'ajouter la logique pour interagir avec Doctrine.
+
+Exemple avec un objet statique :
+php
+Copier le code
+/**
+ * @Route("/api/restaurant", name="add_restaurant", methods={"POST"})
+ */
+public function addRestaurant(): JsonResponse
+{
+    $restaurant = [
+        'name' => 'Le Gourmet',
+        'description' => 'Un restaurant avec des plats de qualité exceptionnelle.',
+        'created_at' => new \DateTime(),
+    ];
+
+    return $this->json([
+        'message' => 'Restaurant créé',
+        'data' => $restaurant,
+    ], Response::HTTP_CREATED);
+}
+4. Connecter les routes à la base de données
+Une fois les tests réussis, vous pouvez lier vos routes à Doctrine pour interagir avec votre base.
+
+Route POST /api/restaurant avec Doctrine :
+Voici comment enregistrer un restaurant en base :
+
+php
+Copier le code
+/**
+ * @Route("/api/restaurant", name="add_restaurant", methods={"POST"})
+ */
+public function addRestaurant(Request $request, ManagerRegistry $doctrine): JsonResponse
+{
+    $data = json_decode($request->getContent(), true);
+
+    // Valider les données reçues
+    if (!isset($data['name']) || !isset($data['description'])) {
+        return $this->json(['message' => 'Données manquantes'], Response::HTTP_BAD_REQUEST);
+    }
+
+    // Créer un nouvel objet Restaurant
+    $restaurant = new Restaurant();
+    $restaurant->setName($data['name']);
+    $restaurant->setDescription($data['description']);
+    $restaurant->setCreatedAt(new \DateTime());
+
+    // Sauvegarder en base
+    $entityManager = $doctrine->getManager();
+    $entityManager->persist($restaurant);
+    $entityManager->flush();
+
+    return $this->json([
+        'message' => 'Restaurant créé',
+        'data' => [
+            'id' => $restaurant->getId(),
+            'name' => $restaurant->getName(),
+            'description' => $restaurant->getDescription(),
+        ],
+    ], Response::HTTP_CREATED);
+}
+5. Tester les fonctionnalités
+Tester avec Postman ou cURL :
+Méthode : POST
+URL : http://localhost:8000/api/restaurant
+Body :
+json
+Copier le code
+{
+    "name": "Le Gourmet",
+    "description": "Un restaurant avec des plats de qualité exceptionnelle."
+}
+Réponse attendue :
+json
+Copier le code
+{
+    "message": "Restaurant créé",
+    "data": {
+        "id": 1,
+        "name": "Le Gourmet",
+        "description": "Un restaurant avec des plats de qualité exceptionnelle."
+    }
+}
+6. Prochaine étape : rendre les méthodes dynamiques
+Pour la route GET /api/restaurant, récupérez tous les restaurants depuis la base.
+Pour la route GET /api/restaurant/{id}, récupérez un restaurant spécifique.
+Pour la route DELETE /api/restaurant/{id}, supprimez un restaurant.
+===>READ
+Étant donné que nous pouvons ajouter des « Restaurants » au sein de notre base via Doctrine, il nous faut maintenant la possibilité de voir chaque « Restaurant » par son attribut $id, en lui passant celui-ci en paramètre de l’URL.
+
+Également, il nous faudra son repository « RestaurantRepository » pour aller chercher l’entité en base avec son $id, via la méthode « ->find($id) » ;
+
+CTRL+C pour copier, CTRL+V pour coller
+1
+<?php
+2
+3
+// …
+4
+5
+    #[Route('/{id}', name: 'show', methods: 'GET')]
+6
+    public function show(int $id): Response
+7
+    {
+8
+        $restaurant = $this->repository->findOneBy(['id' => $id]);
+9
+10
+        if (!$restaurant) {
+11
+            throw $this->createNotFoundException("No Restaurant found for {$id} id");
+12
+        }
+13
+14
+        return $this->json(
+15
+            ['message' => "A Restaurant was found : {$restaurant->getName()} for {$restaurant->getId()} id"]
+16
+        );
+17
+    } 
+18
+19
+// …
+Notre condition if sert à s’assurer que l’objet « Restaurant » sélectionné existe bien en base sinon une erreur en JSON est renvoyée.
+
+Chacun des types HTTP correspond aux standards RESTful et vous sera expliqué lors de la mise en API.
