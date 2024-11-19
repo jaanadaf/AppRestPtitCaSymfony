@@ -20,19 +20,19 @@ class Restaurant
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    private ?string $Description = null;
+    private ?string $description = null;
 
     #[ORM\Column]
     private ?int $heuresOuverture = null;
 
     #[ORM\Column]
-    private ?int $Nombivtmaximum = null;
+    private ?int $nombreMaximum = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $Datedecreation = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: "created_at")]
+    private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $Datedemiseajour = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: "updated_at")]
+    private ?\DateTimeInterface $updatedAt = null;
 
     #[ORM\OneToMany(targetEntity: Picture::class, mappedBy: 'restaurant', orphanRemoval: true)]
     private Collection $pictures;
@@ -61,12 +61,12 @@ class Restaurant
 
     public function getDescription(): ?string
     {
-        return $this->Description;
+        return $this->description;
     }
 
-    public function setDescription(string $Description): static
+    public function setDescription(string $description): static
     {
-        $this->Description = $Description;
+        $this->description = $description;
 
         return $this;
     }
@@ -83,38 +83,38 @@ class Restaurant
         return $this;
     }
 
-    public function getNombivtmaximum(): ?int
+    public function getNombreMaximum(): ?int
     {
-        return $this->Nombivtmaximum;
+        return $this->nombreMaximum;
     }
 
-    public function setNombivtmaximum(int $Nombivtmaximum): static
+    public function setNombreMaximum(int $nombreMaximum): static
     {
-        $this->Nombivtmaximum = $Nombivtmaximum;
+        $this->nombreMaximum = $nombreMaximum;
 
         return $this;
     }
 
-    public function getDatedecreation(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeInterface
     {
-        return $this->Datedecreation;
+        return $this->createdAt;
     }
 
-    public function setDatedecreation(\DateTimeInterface $Datedecreation): static
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
-        $this->Datedecreation = $Datedecreation;
+        $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getDatedemiseajour(): ?\DateTimeInterface
+    public function getUpdatedAt(): ?\DateTimeInterface
     {
-        return $this->Datedemiseajour;
+        return $this->updatedAt;
     }
 
-    public function setDatedemiseajour(\DateTimeInterface $Datedemiseajour): static
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
     {
-        $this->Datedemiseajour = $Datedemiseajour;
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }

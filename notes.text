@@ -714,3 +714,240 @@ CTRL+C pour copier, CTRL+V pour coller
 Notre condition if sert à s’assurer que l’objet « Restaurant » sélectionné existe bien en base sinon une erreur en JSON est renvoyée.
 
 Chacun des types HTTP correspond aux standards RESTful et vous sera expliqué lors de la mise en API.
+=================================================================================
+DELETE
+1. Gestion des routes avec paramètres dans l'URL
+Les routes telles que /api/restaurant/{id} permettent de passer des arguments dynamiquement dans l'URL. Par exemple :
+
+Quand tu accèdes à /api/restaurant/1, le paramètre {id} est automatiquement injecté dans la méthode grâce à Symfony.
+Ce paramètre est ensuite utilisé pour chercher une ressource (exemple : un restaurant dans la base de données).
+Exemple d'utilisation dans la méthode show :
+
+php
+Copier le code
+$restaurant = $this->repository->find($id);
+Cela récupère un restaurant ayant l'ID spécifié dans l'URL. Si aucun restaurant n'est trouvé, on peut lever une exception pour signaler une erreur.
+
+2. Lever une exception si la ressource n'existe pas
+Symfony propose plusieurs façons de lever des erreurs, comme :
+
+throw new \Exception("Message d'erreur"); : une exception générique.
+throw $this->createNotFoundException("Message d'erreur"); : une méthode spécifique à Symfony pour signaler qu'une ressource est introuvable (renvoie une réponse HTTP 404 par défaut).
+Cela permet de gérer les cas où un restaurant est introuvable. Exemple :
+
+php
+Copier le code
+if (!$restaurant) {
+    throw $this->createNotFoundException("No Restaurant found for ID {$id}");
+}
+3. Mise à jour en base de données
+Quand on modifie un objet, il faut signaler à Doctrine (l'ORM utilisé par Symfony) de sauvegarder les changements. Cela se fait avec :
+
+$this->manager->persist($restaurant); : pour suivre l'entité modifiée.
+$this->manager->flush(); : pour pousser les modifications dans la base de données.
+Exemple dans la méthode edit :
+
+php
+Copier le code
+$restaurant->setName('Nouveau nom');
+$this->manager->flush();
+Cela met à jour le champ name du restaurant dans la base.
+
+4. Suppression d'une ressource
+Pour supprimer un objet, on utilise :
+
+$this->manager->remove($restaurant); : pour marquer l'objet à supprimer.
+$this->manager->flush(); : pour effectuer la suppression en base.
+Exemple dans la méthode delete :
+
+php
+Copier le code
+$this->manager->remove($restaurant);
+$this->manager->flush();
+5. Retourner des données au format JSON
+Symfony facilite le retour de données JSON, qui est le format standard pour les API REST. Voici deux exemples de retour JSON :
+
+Retour d'un message simple :
+
+php
+Copier le code
+return $this->json(['message' => "Restaurant found: {$restaurant->getName()} for ID {$restaurant->getId()}"]);
+Ce code renvoie un message contenant uniquement des informations essentielles.
+
+Retour d'une structure détaillée :
+
+php
+Copier le code
+return $this->json([
+    'id' => $restaurant->getId(),
+    'name' => $restaurant->getName(),
+    'description' => $restaurant->getDescription(),
+    'createdAt' => $restaurant->getCreatedAt()->format('Y-m-d H:i:s'),
+]);
+Ce code renvoie une structure plus riche, souvent utilisée pour afficher des détails sur la ressource.
+
+Résumé du workflow
+On configure une route qui accepte des paramètres (/api/restaurant/{id}).
+On injecte les dépendances nécessaires (EntityManager, RestaurantRepository) dans le contrôleur.
+On cherche les données dans la base grâce au repository.
+On gère les exceptions en cas de ressource introuvable.
+On effectue des modifications en base avec persist et flush.
+On renvoie une réponse JSON adaptée.
+Si tu as d'autres questions ou si tu veux approfondir un aspect spécif
+
+LA SUITE
+1. Méthode GET (Récupérer des données) :
+Lorsque vous effectuez une requête GET pour récupérer des ressources (comme un restaurant), le navigateur utilise cette méthode pour obtenir des informations à partir du serveur. Par exemple, en appelant une API pour obtenir un restaurant avec un ID spécifique, vous utilisez une requête de type GET dans Postman ou un navigateur :
+
+Exemple :
+
+URL : api/restaurant/1
+Méthode : GET
+Cela va appeler un contrôleur qui, via le Repository, récupère le restaurant par son ID à l'aide de la méthode findOneBy() :
+
+php
+Copier le code
+$restaurant = $restaurantRepository->findOneBy(['id' => $id]);
+Ensuite, vous retournez l'objet restaurant sous forme de réponse.
+
+2. Méthode POST (Ajouter des données) :
+Pour ajouter un nouveau restaurant à la base de données, vous utilisez une méthode POST. Cela nécessite de recevoir les données envoyées par le client (par exemple, via un formulaire) et de les insérer dans la base de données.
+
+Exemple avec Postman :
+
+URL : api/restaurant
+Méthode : POST
+Corps de la requête : un objet JSON contenant les informations du restaurant (nom, description, etc.).
+En Symfony, vous utilisez un contrôleur qui récupère ces données, crée un nouvel objet Restaurant, puis l'enregistre dans la base de données :
+
+php
+Copier le code
+$restaurant = new Restaurant();
+$restaurant->setNom($nom);
+$restaurant->setDescription($description);
+// Autres propriétés...
+
+$entityManager->persist($restaurant); // Pour enregistrer l'objet dans la base de données
+$entityManager->flush(); // Pour appliquer les changements
+Si tout se passe bien, vous obtenez une réponse HTTP 201 (Created) avec les données du restaurant.
+
+3. Méthode PUT (Modifier des données) :
+Pour modifier un restaurant existant, vous devez récupérer l'objet via son ID, puis mettre à jour ses propriétés. Une fois les modifications effectuées, vous enregistrez à nouveau l'objet dans la base de données.
+
+Exemple avec Postman :
+
+URL : api/restaurant/1
+Méthode : PUT
+Corps de la requête : un objet JSON avec les nouvelles valeurs du restaurant.
+En Symfony, vous récupérez le restaurant existant, le modifiez, puis vous utilisez le flush() pour appliquer les changements :
+
+php
+Copier le code
+$restaurant = $restaurantRepository->findOneBy(['id' => $id]);
+if ($restaurant) {
+    $restaurant->setNom($newNom);
+    $restaurant->setDescription($newDescription);
+    // Autres modifications...
+
+    $entityManager->flush(); // Appliquer les changements
+}
+4. Méthode DELETE (Supprimer des données) :
+Pour supprimer un restaurant de la base de données, vous récupérez d'abord l'objet par son ID, puis vous utilisez la méthode remove() sur l'EntityManager pour le supprimer.
+
+Exemple avec Postman :
+
+URL : api/restaurant/1
+Méthode : DELETE
+Le contrôleur Symfony correspond à :
+
+php
+Copier le code
+$restaurant = $restaurantRepository->findOneBy(['id' => $id]);
+if ($restaurant) {
+    $entityManager->remove($restaurant);
+    $entityManager->flush(); // Appliquer la suppression
+}
+5. Utilisation de Postman ou cURL :
+Si vous voulez tester vos API sans passer par un navigateur, vous pouvez utiliser Postman pour envoyer des requêtes HTTP (GET, POST, PUT, DELETE).
+
+Exemple avec cURL :
+Si vous préférez utiliser la ligne de commande, vous pouvez utiliser cURL pour tester votre API. Par exemple, pour envoyer une requête POST :
+
+bash
+Copier le code
+curl -X POST -H "Content-Type: application/json" -d '{"nom": "New Restaurant", "description": "Delicious food"}' http://localhost/api/restaurant
+Conclusion :
+Utilisez POSTMAN ou cURL pour tester vos requêtes API.
+Les méthodes de requêtes (GET, POST, PUT, DELETE) permettent d'interagir avec votre base de données via Doctrine.
+Utilisez find(), findOneBy() pour récupérer des objets, persist() et flush() pour les ajouter ou modifier, et remove() et flush() pour les supprimer.
+==========================================================================================
+===>HTTP
+-Requête HTTP
+-Réponse HTTP
+INSTALLATION DE POSTMAN
+Qu'est-ce qu'une API et pourquoi l'utiliser ?
+Une API (Application Programming Interface) est une interface permettant d’échanger des données entre différentes applications.
+L’architecture client-serveur est centrale :
+Le client (ex. application mobile, site web, logiciel) envoie une requête.
+Le serveur répond avec des données ou des informations spécifiques.
+Les API sont essentielles pour :
+Connecter des services.
+Permettre l’accès sécurisé aux données grâce à des mécanismes comme les tokens.
+Faciliter les interactions entre différentes technologies.
+Types de requêtes HTTP fréquemment utilisées
+GET : Récupérer des ressources (ex. une liste d'articles).
+POST : Envoyer des données pour en créer de nouvelles (ex. enregistrer un utilisateur).
+PUT/PATCH : Mettre à jour des ressources existantes (totalement ou partiellement).
+DELETE : Supprimer une ressource.
+Ces requêtes sont standardisées par des documents comme le RFC 2616.
+
+Outils pour consommer une API
+Postman :
+
+Logiciel très utilisé pour tester et interagir avec les API.
+Il permet de :
+Créer des requêtes.
+Tester les réponses du serveur.
+Ajouter des paramètres (headers, body, tokens).
+Sauvegarder des requêtes dans des collections.
+Avantages :
+Interface visuelle simple.
+Compatible avec toutes les plateformes (Windows, Mac, Linux).
+Astuce : Créez un compte Postman pour sauvegarder vos travaux dans le cloud.
+Curl :
+
+Utilitaire en ligne de commande pour effectuer des requêtes HTTP.
+Exemple pour une requête POST :
+bash
+Copier le code
+curl -X POST http://localhost:8000/api/resource -d '{"key":"value"}' -H "Content-Type: application/json"
+Moins visuel, mais très utile pour automatiser les tests dans des scripts.
+Exemple d’utilisation avec Postman
+Tester une requête :
+
+Sélectionnez le type de requête (GET, POST, etc.).
+Ajoutez l’URL de l’API (ex. http://127.0.0.1:8000/api/resource).
+Configurez les paramètres :
+Headers : Ex. Authorization: Bearer <token> pour l’authentification.
+Body : Contient les données pour une requête POST ou PUT, souvent au format JSON.
+Cliquez sur Send pour envoyer la requête.
+Analyser la réponse :
+
+Code HTTP de la réponse (ex. 200 pour succès, 401 pour non autorisé).
+Corps de la réponse (JSON, HTML, etc.).
+Temps de réponse du serveur.
+Sauvegarder et organiser vos requêtes :
+
+Utilisez des collections pour regrouper des requêtes similaires.
+Partagez ces collections avec votre équipe.
+Bonnes pratiques pour les API
+Stateless : Les API ne doivent pas conserver d’état entre les requêtes.
+Authentification :
+Utilisez des tokens (ex. JWT) plutôt que des cookies.
+Activez les mécanismes de sécurité pour protéger vos données.
+Documentation : Fournissez des exemples clairs d’utilisation avec des outils comme Swagger ou Postman.
+Validation des données : Assurez-vous que les données reçues dans les requêtes sont valides.
+Outils complémentaires
+Swagger/OpenAPI : Génère automatiquement une documentation interactive pour vos API.
+Postman Collections : Permet de partager des tests d’API avec vos collègues.
+Environnements Postman : Configurez des variables dynamiques (URL, tokens) pour gagner du temps.
