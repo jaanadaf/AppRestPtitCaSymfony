@@ -951,3 +951,461 @@ Outils complémentaires
 Swagger/OpenAPI : Génère automatiquement une documentation interactive pour vos API.
 Postman Collections : Permet de partager des tests d’API avec vos collègues.
 Environnements Postman : Configurez des variables dynamiques (URL, tokens) pour gagner du temps.
+============================================================================================================================
+SERIALISER ET DESERIALISER NOS OBJETS EN SYMFONY
+====>reformulation du code code statique en code dynamiquement
+code avant:
+
+#[Route(methods: 'POST')]
+    public function new(): Response
+    {
+        $restaurant = new Restaurant();
+        $restaurant->getNom();('Quai Antique');
+        $restaurant->setDescription('Cette qualité et ce goût par le chef Arnaud MICHANT.');
+        $restaurant->setCreatedAt(new DateTimeImmutable());
+
+        // Tell Doctrine you want to (eventually) save the restaurant (no queries yet)
+        $this->manager->persist($restaurant);
+        // Actually executes the queries (i.e. the INSERT query)
+        $this->manager->flush();
+
+        return $this->json(
+            ['message' => "Restaurant resource created with {$restaurant->getId()} id"],
+            Response::HTTP_CREATED,
+        );
+    } 
+
+    =================
+    nouveau code avec sérialisation
+    <?php
+
+namespace App\Controller;
+
+use App\Entity\Restaurant;
+use DateTimeImmutable ;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Serializer\SerializerInterface;
+
+#[Route('/api/restaurant', name: 'app_api_restaurant_')]
+class RestaurantController extends AbstractController
+{
+    // …
+
+    #[Route(methods: 'POST')]
+    public function new(Request $request): JsonResponse
+    {
+        $restaurant = $this->serializer->deserialize($request->getContent(), Restaurant::class, 'json');
+        $restaurant->setCreatedAt(new DateTimeImmutable());
+
+        $this->manager->persist($restaurant);
+        $this->manager->flush();
+
+        $responseData = $this->serializer->serialize($restaurant, 'json');
+        $location = $this->urlGenerator->generate(
+            'app_api_restaurant_show',
+            ['id' => $restaurant->getId()],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
+
+        return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
+
+    //…
+}}
+===================================================================================================================
+SUITE:
+1. Mise en place des routes API
+Vous avez défini plusieurs méthodes CRUD pour votre contrôleur API RestaurantController :
+
+New (POST) : Pour créer un nouvel élément dans la base de données.
+Show (GET) : Pour récupérer un élément spécifique.
+Edit (PUT) : Pour mettre à jour un élément.
+Delete (DELETE) : Pour supprimer un élément.
+Chaque méthode est conçue pour répondre à des requêtes HTTP spécifiques et pour renvoyer des réponses structurées.
+
+2. Suppression du contenu statique
+Vous avez supprimé le contenu "en dur" (données écrites directement dans le code) pour rendre vos opérations dynamiques :
+
+Les données sont désormais envoyées par le client via Postman (ou tout autre client HTTP).
+La validation et le traitement des données envoyées sont effectués à partir de la requête.
+3. Sérialisation et Désérialisation
+Le composant Serializer de Symfony permet :
+
+Désérialisation : Transformer les données JSON reçues en un objet PHP (par exemple, un objet Restaurant).
+Sérialisation : Transformer un objet PHP en JSON pour le renvoyer au client.
+Exemple de désérialisation dans la méthode new :
+php
+Copier le code
+use Symfony\Component\Serializer\SerializerInterface;
+
+public function new(Request $request, SerializerInterface $serializer): JsonResponse
+{
+    $data = $request->getContent();
+    $restaurant = $serializer->deserialize($data, Restaurant::class, 'json');
+    
+    $entityManager = $this->getDoctrine()->getManager();
+    $entityManager->persist($restaurant);
+    $entityManager->flush();
+
+    return new JsonResponse(['message' => 'Restaurant created successfully'], 201);
+}
+Exemple de sérialisation dans la méthode show :
+php
+Copier le code
+public function show(int $id, SerializerInterface $serializer): JsonResponse
+{
+    $repository = $this->getDoctrine()->getRepository(Restaurant::class);
+    $restaurant = $repository->find($id);
+
+    if (!$restaurant) {
+        return new JsonResponse(['error' => 'Restaurant not found'], 404);
+    }
+
+    $json = $serializer->serialize($restaurant, 'json');
+    return new JsonResponse($json, 200, [], true);
+}
+4. Mise à jour dynamique (Edit)
+Dans la méthode edit, l'utilisation du paramètre object_to_populate est une excellente pratique :
+
+Cela permet de mettre à jour un objet existant sans en recréer un.
+Exemple :
+php
+Copier le code
+$serializer->deserialize(
+    $request->getContent(),
+    Restaurant::class,
+    'json',
+    ['object_to_populate' => $restaurant]
+);
+Cela garantit que seuls les champs fournis dans la requête sont mis à jour.
+
+5. Suppression (Delete)
+La méthode delete est simplifiée pour rechercher un élément et le supprimer si trouvé :
+
+php
+Copier le code
+public function delete(int $id): JsonResponse
+{
+    $repository = $this->getDoctrine()->getRepository(Restaurant::class);
+    $restaurant = $repository->find($id);
+
+    if (!$restaurant) {
+        return new JsonResponse(['error' => 'Restaurant not found'], 404);
+    }
+
+    $entityManager = $this->getDoctrine()->getManager();
+    $entityManager->remove($restaurant);
+    $entityManager->flush();
+
+    return new JsonResponse(['message' => 'Restaurant deleted successfully'], 200);
+}
+6. Gestion des erreurs et bonnes pratiques
+Retourner des codes HTTP appropriés :
+201 Created pour une création réussie.
+200 OK pour une récupération ou une mise à jour.
+404 Not Found pour des ressources introuvables.
+Ajouter des headers comme Location pour guider le client vers la ressource créée ou modifiée.
+Valider les données avant la persistance en utilisant les contraintes de validation de Symfony.
+7. Test avec Postman
+Voici les étapes pour tester vos routes :
+
+POST /api/restaurant : Créez un restaurant en envoyant un JSON avec les champs nécessaires (name, description, etc.).
+GET /api/restaurant/{id} : Récupérez les informations d'un restaurant spécifique.
+PUT /api/restaurant/{id} : Modifiez les informations d'un restaurant.
+DELETE /api/restaurant/{id} : Supprimez un restaurant.
+8. Prochaines étapes
+Ajouter des tests unitaires pour valider le comportement des contrôleurs.
+Configurer un middleware pour centraliser les erreurs et les formats de réponse.
+Implémenter des validations avancées avec des DTO (Data Transfer Objects
+================================================================================
+Sécuriser l’accès aux donnéescontenu
+====>Authentification
+-Installer symfony/security-bundle
+-Créer l’entité User
+Installation du composant Security Bundle :
+
+Utilisez la commande suivante pour installer le bundle de sécurité :
+bash
+Copier le code
+composer require symfony/security-bundle
+Création de l'entité Utilisateur :
+
+Une entité User est nécessaire pour gérer les utilisateurs. Symfony propose un modèle d'entité pour l'utilisateur avec des champs comme id, email, password, et roles. Il est possible de personnaliser cette entité pour ajouter des champs comme api_token.
+Créez l'entité User en utilisant la commande suivante :
+bash
+Copier le code
+php bin/console make:user
+Vous serez invité à définir le nom de la classe (par défaut User), l'attribut unique pour identifier l'utilisateur (souvent email), et la gestion du mot de passe (qui sera haché).
+L'entité User implémente l'interface UserInterface qui impose des méthodes pour gérer l'authentification, comme getPassword() et getRoles().
+Ajout des champs supplémentaires :
+
+Si nécessaire, ajoutez des propriétés comme api_token, created_at, et updated_at dans l'entité User. Vous pouvez également ajouter des méthodes pour générer des tokens d'API à chaque inscription.
+Création de la migration :
+
+Après avoir créé ou modifié l'entité User, générez une migration pour appliquer les changements à la base de données :
+bash
+Copier le code
+php bin/console make:migration
+Appliquez la migration avec :
+bash
+Copier le code
+php bin/console doctrine:migrations:migrate
+Mise à jour du fichier security.yaml :
+
+Dans le fichier config/packages/security.yaml, configurez les paramètres de sécurité, comme le firewall, le user_provider, et les règles d'accès pour chaque route. Voici un exemple de configuration de base pour l'authentification par email et mot de passe :
+yaml
+Copier le code
+security:
+    encoders:
+        App\Entity\User:
+            algorithm: bcrypt
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/_(profiler|router|security|debug)/
+            security: false
+
+        main:
+            pattern: ^/
+            form_login:
+                login_path: login
+                check_path: login
+                default_target_path: homepage
+            logout:
+                path: logout
+                target: homepage
+            # Activation du système d'authentification par token API
+            guard:
+                authenticators:
+                    - App\Security\ApiTokenAuthenticator
+
+    access_control:
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/user, roles: ROLE_USER }
+Création de l'authentification (login) :
+
+Vous pouvez ajouter des routes pour la connexion et l'inscription des utilisateurs. Un contrôleur pourrait ressembler à ceci :
+php
+Copier le code
+// src/Controller/AuthController.php
+namespace App\Controller;
+
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class AuthController extends AbstractController
+{
+    #[Route('/login', name: 'login')]
+    public function login(): Response
+    {
+        // Affiche la page de connexion
+        return $this->render('auth/login.html.twig');
+    }
+
+    #[Route('/register', name: 'register')]
+    public function register(Request $request): Response
+    {
+        // Traite l'inscription
+    }
+}
+Génération de api_token :
+
+Vous pouvez générer un api_token unique pour chaque utilisateur au moment de l'inscription, en utilisant un générateur de chaînes aléatoires.
+Exemple de code dans votre entité User pour générer un token :
+php
+Copier le code
+use Symfony\Component\Security\Core\User\UserInterface;
+use Ramsey\Uuid\Guid\Guid;
+
+class User implements UserInterface
+{
+    // autres propriétés...
+
+    /**
+     * @ORM\Column(type="string", length=255, unique=true)
+     */
+    private $apiToken;
+
+    public function generateApiToken()
+    {
+        $this->apiToken = Guid::uuid4()->toString();
+    }
+}
+Utilisation du Token API pour l'authentification :
+
+Pour l'authentification par token API, vous devez créer un ApiTokenAuthenticator personnalisé. Ce dernier interceptera les requêtes API et vérifiera le token passé dans les en-têtes HTTP.
+Exemple de code pour le ApiTokenAuthenticator :
+php
+Copier le code
+namespace App\Security;
+
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
+
+class ApiTokenAuthenticator extends AbstractGuardAuthenticator
+{
+    public function getCredentials(Request $request)
+    {
+        $token = $request->headers->get('X-AUTH-TOKEN');
+        return $token ? ['api_token' => $token] : null;
+    }
+
+    public function getUser($credentials, UserProviderInterface $userProvider)
+    {
+        if (null === $credentials['api_token']) {
+            return null;
+        }
+
+        return $userProvider->loadUserByUsername($credentials['api_token']);
+    }
+
+    public function checkCredentials($credentials, UserInterface $user)
+    {
+        return true; // Pas de vérification supplémentaire
+    }
+
+    public function onAuthenticationFailure(Request $request, \Exception $exception)
+    {
+        return new Response('Authentication failed', Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function start(Request $request, \Exception $authException = null)
+    {
+        return new Response('Authentication required', Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function supportsRememberMe()
+    {
+        return false;
+    }
+}
+Configurer les routes protégées :
+
+Configurez les routes dans votre contrôleur pour restreindre l'accès en fonction des rôles de l'utilisateur. Par exemple, certaines routes peuvent être accessibles uniquement par les administrateurs ou les utilisateurs authentifiés.
+=================================================================================
+CREATION SECURITY Controller
+1. Création d'un contrôleur d'inscription
+Dans Symfony, vous allez créer un contrôleur pour gérer l'inscription des utilisateurs et retourner un API token une fois le compte créé.
+
+Commande pour créer un contrôleur :
+bash
+Copier le code
+php bin/console make:controller SecurityController
+Vous pouvez l'appeler RegistrationController si vous préférez séparer l'inscription et la connexion, mais pour simplifier, vous pouvez aussi l'intégrer dans un contrôleur SecurityController comme proposé.
+
+2. Définir la route d'inscription
+Dans votre contrôleur SecurityController, vous allez définir une méthode qui sera utilisée pour traiter l'inscription des utilisateurs.
+
+php
+Copier le code
+// src/Controller/SecurityController.php
+
+namespace App\Controller;
+
+use App\Entity\User;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Security\Core\Authorization\Voter\AuthenticatedVoter;
+
+class SecurityController extends AbstractController
+{
+    private $passwordEncoder;
+    private $serializer;
+    private $entityManager;
+
+    public function __construct(UserPasswordEncoderInterface $passwordEncoder, SerializerInterface $serializer, EntityManagerInterface $entityManager)
+    {
+        $this->passwordEncoder = $passwordEncoder;
+        $this->serializer = $serializer;
+        $this->entityManager = $entityManager;
+    }
+
+    /**
+     * @Route("/api/register", name="api_register", methods={"POST"})
+     */
+    public function register(Request $request): Response
+    {
+        $data = json_decode($request->getContent(), true);
+
+        // Créer un nouvel utilisateur à partir des données envoyées
+        $user = new User();
+        $user->setEmail($data['email']);
+        $user->setFirstName($data['first_name']);
+        $user->setLastName($data['last_name']);
+        $user->setRoles(['ROLE_USER']); // Assigner un rôle par défaut
+
+        // Encoder le mot de passe
+        $hashedPassword = $this->passwordEncoder->encodePassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
+
+        // Ajouter un token API
+        $user->setApiToken(bin2hex(random_bytes(32))); // Générer un token unique
+
+        // Enregistrer l'utilisateur en base de données
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        // Retourner une réponse JSON avec l'API token
+        return $this->json([
+            'id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'api_token' => $user->getApiToken(),
+            'roles' => $user->getRoles()
+        ], Response::HTTP_CREATED);
+    }
+}
+3. Récupérer les données du formulaire
+Dans cette méthode, vous récupérez les données envoyées dans la requête HTTP POST. Ces données contiennent les informations de l'utilisateur telles que son email, son mot de passe, son prénom et son nom.
+
+Encodage du mot de passe : Vous utilisez le service UserPasswordEncoderInterface pour hacher le mot de passe de l'utilisateur avant de le stocker dans la base de données.
+Génération d'un API Token : Un API token est généré à l'aide de la fonction random_bytes() et converti en une chaîne hexadécimale.
+4. Configuration du service de sérialisation
+Symfony utilise des services de sérialisation pour transformer les objets en JSON. Le service SerializerInterface est injecté dans le contrôleur pour gérer la conversion des données. Vous pouvez l'utiliser si vous devez personnaliser la sérialisation des entités.
+
+5. Tester avec Postman
+Une fois le contrôleur créé, vous pouvez tester l'API avec Postman en envoyant une requête POST vers l'URL /api/register. Voici un exemple de payload JSON :
+
+json
+Copier le code
+{
+    "email": "user@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "password": "password123"
+}
+Vous devriez recevoir une réponse JSON qui ressemble à ceci :
+
+json
+Copier le code
+{
+    "id": 1,
+    "email": "user@example.com",
+    "api_token": "8c0f4b47b29e94c30d034c9f85df5f120a3c812907b44f35b9298be7a4405e7e",
+    "roles": ["ROLE_USER"]
+}
+Cela signifie que le compte utilisateur a été créé avec succès, et l'API token est généré et retourné.
+
+6. Vérification et amélioration
+Validation des données : Vous pouvez ajouter une validation pour vous assurer que toutes les données envoyées sont correctes (format de l'email, longueur du mot de passe, etc.).
+Gestion des erreurs : Vous pouvez améliorer la gestion des erreurs pour renvoyer des messages clairs en cas de données manquantes ou invalides.
+Conclusion
+Vous avez maintenant une API fonctionnelle pour créer un utilisateur dans votre système avec un token d'authentification généré automatiquement. Il suffit de tester via Postman et de s'assurer que les utilisateurs peuvent s'enregistrer correctement et récupérer leur token.
