@@ -33,6 +33,23 @@ contenu
 -Créer une route
 -Configurer une route
 ===>Mettre en place un CRUD
+====>Mettre en place les composants d’accès aux données
+-Requête HTTP
+-Réponse HTTP
+-Installer Postman
+====Sérialiser et désérialiser avec Symfony
+-Concept clé
+-Installer le composant sérialiser de Symfony
+-Sérialiser et désérialiser nos objets en Symfony
+====>Sécuriser l’accès aux données
+-Installer symfony/security-bundle
+-Créer l’entité User
+-Créer un système d’inscription
+-Créer un système d’authentification
+-Créer un système d’authentification
+-Sécuriser et bloquer les accès aux utilisateurs non connectés
+-Créer un ApiTokenAuthenticator
+
 
 
 =============================================================================
@@ -1537,3 +1554,132 @@ Utilisation de SelfValidatingPassport : SelfValidatingPassport est utilisé pour
 
 Conclusion
 Ce code est un exemple d'authentification API dans Symfony avec un token. Vous devez vous assurer que l'utilisateur est bien stocké avec un apiToken valide et que les exceptions personnalisées sont correctement gérées pour éviter les erreurs.
+============================================================================================
+Documenter son API
+-Installer NelmioApiDocBundle
+-Configurer NelmioApiDocBundle
+Comprendre et mettre en œuvre une documentation Swagger pour votre API Symfony
+Swagger est un outil puissant pour documenter vos APIs. Avec Symfony, vous pouvez facilement intégrer Swagger via le bundle NelmioApiDocBundle, qui fournit une interface visuelle et interactive pour tester vos endpoints. Voici un guide complet pour configurer et utiliser Swagger avec Symfony :
+
+1. Installation de NelmioApiDocBundle
+Commencez par installer le bundle avec Composer :
+
+bash
+Copier le code
+composer require nelmio/api-doc-bundle
+2. Configuration initiale
+Une fois installé, une recette Symfony sera exécutée. Elle configure automatiquement le bundle, en créant des fichiers de configuration dans :
+
+config/packages/nelmio_api_doc.yaml
+config/routes/nelmio_api_doc.yaml
+Exemple de configuration générée :
+
+yaml
+Copier le code
+# config/packages/nelmio_api_doc.yaml
+nelmio_api_doc:
+    documentation:
+        info:
+            title: "My API"
+            description: "Documentation de mon API"
+            version: "1.0.0"
+Cela génère une route pour accéder à la documentation :
+
+yaml
+Copier le code
+# config/routes/nelmio_api_doc.yaml
+nelmio_api_doc:
+    resource: "@NelmioApiDocBundle/Resources/config/routes.yaml"
+    prefix: /api/doc
+URL d'accès : http://votre-domaine/api/doc
+
+3. Problème d'accès sécurisé
+Si vous avez configuré une sécurité stricte, vous devrez rendre la route /api/doc publique. Modifiez votre fichier de configuration de sécurité :
+
+yaml
+Copier le code
+# config/packages/security.yaml
+security:
+    firewalls:
+        main:
+            # Ajoutez cette règle pour rendre la documentation accessible publiquement
+            access_control:
+                - { path: ^/api/doc, roles: PUBLIC_ACCESS }
+4. Installation de Twig (si nécessaire)
+Pour que l'interface Swagger fonctionne correctement, il est souvent nécessaire d'installer Twig :
+
+bash
+Copier le code
+composer require symfony/twig-bundle
+Cela ajoutera un moteur de rendu pour l'affichage des pages HTML de la documentation.
+
+5. Documentation des routes
+Swagger utilise des annotations pour enrichir la documentation de vos endpoints. Par exemple :
+
+Indiquer la méthode HTTP (GET, POST, etc.)
+Spécifier les paramètres d'entrée (par ex., email, password)
+Décrire les réponses attendues
+Exemple avec annotations :
+
+php
+Copier le code
+use OpenApi\Annotations as OA;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * @Route("/api/login", methods={"POST"})
+ * @OA\Post(
+ *     path="/api/login",
+ *     summary="Authentification de l'utilisateur",
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             required={"email", "password"},
+ *             @OA\Property(property="email", type="string", example="user@example.com"),
+ *             @OA\Property(property="password", type="string", example="123456")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Utilisateur authentifié avec succès",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="token", type="string", example="JWT-TOKEN")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Email ou mot de passe invalide"
+ *     )
+ * )
+ */
+public function login(): Response
+{
+    // Code pour l'authentification
+}
+6. Tester et vérifier la documentation
+Accédez à http://votre-domaine/api/doc.
+Vérifiez que chaque endpoint est listé avec les bonnes informations :
+Les paramètres requis
+Les types de réponses
+Essayez de tester un endpoint via l'interface Swagger en cliquant sur "Try it out".
+7. Mise en ligne
+Une fois votre documentation prête, elle sera accessible à toute personne disposant de l'URL /api/doc. Vous pouvez la restreindre à certains rôles ou la rendre publique selon vos besoins.
+
+Résolution des erreurs potentielles
+Erreur : "La route est sécurisée"
+
+Assurez-vous d'avoir configuré la route /api/doc comme PUBLIC_ACCESS dans security.yaml.
+Erreur liée à Twig
+
+Installez Twig comme mentionné plus haut.
+Données manquantes dans les requêtes testées
+
+Vérifiez que chaque annotation contient des exemples de données (example="valeur").
+En suivant ces étapes, votre API sera bien documentée et accessible pour tout développeur ou client souhaitant utiliser vos services. Besoin d'aide supplémentaire ? N'hésitez pas à demander !
+
+
+
+
+
+
