@@ -1489,3 +1489,51 @@ Implémenter la génération du token d'API (généralement un JWT).
 Ajouter la gestion de la sécurité (par exemple, via un firewall et un authenticator Symfony).
 Tester les différents cas d'authentification (réussi/échec).
 Cela devrait vous permettre d'avoir une API fonctionnelle pour gérer l'authentification des utilisateurs via leur email et mot de passe.
+=============================================================================================
+Créer un ApiTokenAuthenticator
+Le code que vous avez partagé définit un authentificateur personnalisé dans Symfony, ApiTokenAuthenticator, utilisé pour authentifier un utilisateur en fonction d'un token API présent dans l'en-tête X-AUTH-TOKEN d'une requête HTTP. Voici une explication détaillée de chaque partie :
+
+Explication du code :
+1. Déclarations des dépendances (use)
+use Symfony\Component\HttpFoundation\Request;: Permet de manipuler les requêtes HTTP.
+use Symfony\Component\HttpFoundation\Response;: Utilisé pour créer des réponses HTTP.
+use Symfony\Component\HttpFoundation\JsonResponse;: Permet de créer des réponses HTTP au format JSON.
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;: Représente un jeton d'authentification.
+use Symfony\Component\Security\Core\Exception\AuthenticationException;: Exception levée lorsqu'une erreur d'authentification se produit.
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;: Exception pour personnaliser les messages d'erreur d'authentification.
+use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;: Classe de base pour les authentificateurs Symfony.
+use Symfony\Component\Security\Http\Authenticator\Passport\Passport;: Représente un "passeport" qui contient des informations sur l'utilisateur.
+use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;: Passeport valide sans action supplémentaire, parfait pour un utilisateur déjà authentifié.
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;: Interface pour les utilisateurs qui ont un mot de passe.
+use Symfony\Component\Security\Http\Authenticator\Passport\UserBadge;: Un badge d'utilisateur pour l'authentification, généralement basé sur un identifiant unique.
+use App\Repository\UserRepository;: Le repository utilisé pour récupérer un utilisateur depuis la base de données.
+use App\Exception\UserNotFoundException;: Une exception personnalisée qui peut être levée lorsque l'utilisateur n'est pas trouvé.
+2. Classe ApiTokenAuthenticator
+La classe ApiTokenAuthenticator étend AbstractAuthenticator, la classe de base pour les authentificateurs Symfony. Elle contient plusieurs méthodes clés :
+
+__construct(private UserRepository $repository) : Le constructeur injecte une instance de UserRepository, qui sera utilisée pour récupérer l'utilisateur en fonction de son apiToken.
+
+supports(Request $request): ?bool : Cette méthode vérifie si la requête contient l'en-tête X-AUTH-TOKEN. Si cet en-tête est présent, cela signifie que la requête devrait être authentifiée via un token.
+
+authenticate(Request $request): Passport : Cette méthode tente d'authentifier l'utilisateur. Elle récupère le token API depuis l'en-tête X-AUTH-TOKEN, puis recherche l'utilisateur correspondant dans la base de données en utilisant le UserRepository. Si aucun utilisateur n'est trouvé, une exception UserNotFoundException est levée. Si l'utilisateur est trouvé, un SelfValidatingPassport est retourné avec un UserBadge contenant l'identifiant de l'utilisateur.
+
+onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response : Cette méthode est appelée lorsque l'authentification est réussie. Dans ce cas, elle ne fait rien (retourne null), mais vous pouvez personnaliser cette méthode pour ajouter des comportements après une authentification réussie.
+
+onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response : Cette méthode est appelée lorsque l'authentification échoue. Elle retourne une réponse JSON avec un message d'erreur approprié et un code de statut HTTP 401 (Non autorisé).
+
+3. Flux d'exécution
+Lorsqu'une requête est reçue, la méthode supports() vérifie si l'en-tête X-AUTH-TOKEN est présent.
+Si l'en-tête est trouvé, la méthode authenticate() est appelée pour récupérer l'utilisateur à partir du token.
+Si l'utilisateur est trouvé et validé, il est ajouté à un "passeport" via le SelfValidatingPassport.
+Si l'authentification réussit, onAuthenticationSuccess() est appelé. Si l'authentification échoue, onAuthenticationFailure() est appelée pour retourner un message d'erreur.
+Points à vérifier
+Vérification de la validité du token : Le code suppose que le token est une chaîne que vous vérifiez en recherchant un utilisateur dans votre base de données via findOneBy(['apiToken' => $apiToken]). Vous devez vous assurer que les tokens sont correctement stockés et associés à l'utilisateur.
+
+Gestion des exceptions personnalisées :
+
+CustomUserMessageAuthenticationException est utilisée pour personnaliser le message d'erreur d'authentification lorsque le token n'est pas trouvé.
+UserNotFoundException est une exception personnalisée. Assurez-vous qu'elle est définie dans le namespace App\Exception.
+Utilisation de SelfValidatingPassport : SelfValidatingPassport est utilisé pour les utilisateurs déjà authentifiés, sans nécessiter de vérification supplémentaire (par exemple, mot de passe). Si vous souhaitez ajouter une validation plus approfondie, comme la vérification du mot de passe, vous devrez utiliser Passport avec des CredentialsInterface et un Authenticator.
+
+Conclusion
+Ce code est un exemple d'authentification API dans Symfony avec un token. Vous devez vous assurer que l'utilisateur est bien stocké avec un apiToken valide et que les exceptions personnalisées sont correctement gérées pour éviter les erreurs.
