@@ -32,7 +32,11 @@ class SecurityController extends AbstractController
         $this->manager->flush();
 
         return new JsonResponse(
-            ['user' => $user->getUserIdentifier(), 'apiToken' => $user->getApiToken(), 'roles' => $user->getRoles()],
+
+            ['user' => $user->getUserIdentifier(),
+             'apiToken' => $user->getApiToken(),
+             'roles' => $user->getRoles()],
+
             Response::HTTP_CREATED
         );
     }
@@ -48,6 +52,6 @@ class SecurityController extends AbstractController
             'user' => $user->getUserIdentifier(),
             'apiToken' => $user->getApiToken(),
             'roles' => $user->getRoles(),
-        ], Response::HTTP_OK);
+        ]);
     }
 }
