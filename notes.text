@@ -1677,6 +1677,8 @@ Données manquantes dans les requêtes testées
 
 Vérifiez que chaque annotation contient des exemples de données (example="valeur").
 En suivant ces étapes, votre API sera bien documentée et accessible pour tout développeur ou client souhaitant utiliser vos services. Besoin d'aide supplémentaire ? N'hésitez pas à demander !
+===>Gestion de la sécurité
+-Créer un compte via la documentation
 
 
 
