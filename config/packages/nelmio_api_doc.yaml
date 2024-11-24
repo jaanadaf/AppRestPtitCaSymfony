@@ -2,7 +2,7 @@ nelmio_api_doc:
     documentation:
         info:
             title: My App
-            description: API Documentation
+            description: This is an awesome app!
             version: 1.0.0
     areas: # to filter documented areas
         path_patterns:
