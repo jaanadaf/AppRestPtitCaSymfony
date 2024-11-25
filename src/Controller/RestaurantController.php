@@ -6,6 +6,7 @@ use App\Entity\Restaurant;
 use App\Repository\RestaurantRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use OpenApi\Annotations as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Annotation\Route;
@@ -25,6 +26,23 @@ class RestaurantController extends AbstractController
     }
 
     #[Route(methods: ['POST'])]
+
+    /** @OA\POST(
+     *     path="/api/restaurant",
+     *     summary="Créer un restaurant",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Données du restaurant à créer",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="name", type="string", example="Nom du restaurant"),
+     *             @OA\Property(property="description", type="string", example="Description du restaurant"),
+     *             @OA\Property(property="createdAt", type="string", format="date-time")
+     *         )
+     *     )
+     * )
+     */
     public function new(Request $request): JsonResponse
     {
         $restaurant = $this->serializer->deserialize($request->getContent(), Restaurant::class, 'json');
@@ -45,6 +63,35 @@ class RestaurantController extends AbstractController
     }
 
     #[Route('/{id}', name: 'show', methods: ['GET'])]
+    // …
+
+    /** @OA\Get(
+     *     path="/api/restaurant/{id}",
+     *     summary="Afficher un restaurant par ID",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du restaurant à afficher",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Restaurant trouvé avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="name", type="string", example="Nom du restaurant"),
+     *             @OA\Property(property="description", type="string", example="Description du restaurant"),
+     *             @OA\Property(property="createdAt", type="string", format="date-time")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Restaurant non trouvé"
+     *     )
+     * )
+     */
     public function show(int $id): Response
     {
         $restaurant = $this->repository->findOneBy(['id' => $id]);
