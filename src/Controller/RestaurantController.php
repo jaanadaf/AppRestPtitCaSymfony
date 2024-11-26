@@ -27,7 +27,10 @@ class RestaurantController extends AbstractController
 
     #[Route(methods: ['POST'])]
 
-    /** @OA\POST(
+   
+    public function new(Request $request): JsonResponse
+    {
+         /** @OA\POST(
      *     path="/api/restaurant",
      *     summary="Créer un restaurant",
      *     @OA\RequestBody(
@@ -43,8 +46,6 @@ class RestaurantController extends AbstractController
      *     )
      * )
      */
-    public function new(Request $request): JsonResponse
-    {
         $restaurant = $this->serializer->deserialize($request->getContent(), Restaurant::class, 'json');
         $restaurant->setCreatedAt(new DateTimeImmutable());
         $restaurant->setUpdatedAt(new DateTimeImmutable()); // N'oubliez pas de définir "updatedAt"
@@ -63,9 +64,12 @@ class RestaurantController extends AbstractController
     }
 
     #[Route('/{id}', name: 'show', methods: ['GET'])]
-    // …
+    
 
-    /** @OA\Get(
+    
+    public function show(int $id): Response
+    {
+        /** @OA\Get(
      *     path="/api/restaurant/{id}",
      *     summary="Afficher un restaurant par ID",
      *     @OA\Parameter(
@@ -92,8 +96,6 @@ class RestaurantController extends AbstractController
      *     )
      * )
      */
-    public function show(int $id): Response
-    {
         $restaurant = $this->repository->findOneBy(['id' => $id]);
 
         if ($restaurant) {
@@ -107,6 +109,37 @@ class RestaurantController extends AbstractController
     #[Route('/{id}', name: 'edit', methods: ['PUT'])]
     public function edit(int $id, Request $request): JsonResponse
     {
+        /**
+     * @OA\Put(
+     *     path="/api/restaurant/{id}",
+     *     summary="Mettre à jour un restaurant",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du restaurant à mettre à jour",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Données du restaurant à mettre à jour",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="name", type="string", example="Restaurant Le Gourmet"),
+     *             @OA\Property(property="description", type="string", example="Restaurant offrant des plats gastronomiques"),
+     *             @OA\Property(property="updatedAt", type="string", format="date-time", example="2024-11-01T12:00:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Restaurant mis à jour avec succès"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Restaurant non trouvé"
+     *     )
+     * )
+     */
         $restaurant = $this->repository->findOneBy(['id' => $id]);
 
         if ($restaurant) {
@@ -129,6 +162,27 @@ class RestaurantController extends AbstractController
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
+          /**
+     * @OA\Delete(
+     *     path="/api/restaurant/{id}",
+     *     summary="Supprimer un restaurant",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du restaurant à supprimer",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="Restaurant supprimé avec succès"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Restaurant non trouvé"
+     *     )
+     * )
+     */
         $restaurant = $this->repository->findOneBy(['id' => $id]);
 
         if ($restaurant) {

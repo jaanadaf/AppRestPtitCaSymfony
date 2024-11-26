@@ -1555,7 +1555,7 @@ Utilisation de SelfValidatingPassport : SelfValidatingPassport est utilisé pour
 Conclusion
 Ce code est un exemple d'authentification API dans Symfony avec un token. Vous devez vous assurer que l'utilisateur est bien stocké avec un apiToken valide et que les exceptions personnalisées sont correctement gérées pour éviter les erreurs.
 ============================================================================================
-Documenter son API
+===>Documenter son API
 -Installer NelmioApiDocBundle
 -Configurer NelmioApiDocBundle
 Comprendre et mettre en œuvre une documentation Swagger pour votre API Symfony
@@ -1677,8 +1677,561 @@ Données manquantes dans les requêtes testées
 
 Vérifiez que chaque annotation contient des exemples de données (example="valeur").
 En suivant ces étapes, votre API sera bien documentée et accessible pour tout développeur ou client souhaitant utiliser vos services. Besoin d'aide supplémentaire ? N'hésitez pas à demander !
-===>Gestion de la sécurité
+
+
+================================================================================================================
+===>La gestion de la sécurité
 -Créer un compte via la documentation
+Introduction
+Bonjour à tous, cette semaine, nous explorons la documentation de notre API via Swagger. L'objectif est de comprendre et d'exploiter les routes définies dans notre API, en réalisant des tests interactifs grâce à Swagger UI.
+
+Mise en place des routes dans le contrôleur
+Dans le contrôleur RestaurantController, nous avons créé plusieurs routes destinées à répondre aux requêtes spécifiques de notre application. Cependant, les routes sont sécurisées : toute route commençant par /api nécessite une authentification avec un rôle utilisateur valide. Par exemple, exécuter une requête POST sur /api/restaurant sans authentification génère une erreur 401.
+
+Authentification et récupération du token
+Pour utiliser pleinement les routes de l’API :
+
+Créer un compte utilisateur via la route POST /api/registration.
+Une fois le compte créé, récupérer un token d'authentification en se connectant avec un email et un mot de passe.
+Enregistrer ce token pour effectuer des requêtes authentifiées sur les différentes routes de l’API.
+Swagger permet de tester facilement ces étapes en ajoutant le token dans l’en-tête des requêtes.
+
+Création d’un utilisateur avec Swagger
+Utiliser la route POST /api/registration pour envoyer les données nécessaires :
+email : une adresse email valide.
+password : un mot de passe.
+Actuellement, la documentation indique qu’un code 500 peut être renvoyé si tous les champs requis ne sont pas remplis. Il est important de préciser dans la documentation le type de retour attendu, par exemple un code 201 avec les informations de l’utilisateur créé.
+Documentation des routes avec OpenAPI et Swagger
+Pour que Swagger affiche les informations correctement :
+
+Ajouter des annotations OpenAPI au-dessus des méthodes dans le contrôleur :
+Indiquer le type de requête (GET, POST, etc.).
+Décrire l’URL et son objectif (par exemple, inscription d’un utilisateur).
+Spécifier les paramètres requis dans la requête et leur type.
+Exemple d’annotation pour la route POST /api/registration :
+php
+Copier le code
+/**
+ * @OA\Post(
+ *     path="/api/registration",
+ *     summary="Inscription d'un nouvel utilisateur",
+ *     @OA\RequestBody(
+ *         @OA\JsonContent(
+ *             @OA\Property(property="email", type="string", example="user@example.com"),
+ *             @OA\Property(property="password", type="string", example="password123")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=201,
+ *         description="Utilisateur créé avec succès",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="email", type="string", example="user@example.com"),
+ *             @OA\Property(property="roles", type="array", @OA\Items(type="string")),
+ *             @OA\Property(property="apiToken", type="string", example="abc123xyz")
+ *         )
+ *     )
+ * )
+ */
+Gestion des erreurs
+Il est essentiel de décrire toutes les réponses possibles dans la documentation :
+
+401 Unauthorized : Si l’utilisateur n’est pas authentifié.
+400 Bad Request : Si des champs requis sont manquants.
+201 Created : Si l’utilisateur est créé avec succès.
+Test des requêtes avec Swagger
+Accéder à Swagger UI pour tester les différentes routes.
+Vérifier les exemples fournis pour les champs requis et les types de données.
+Utiliser l’option Try it out pour envoyer des requêtes avec des exemples.
+Résumé
+Grâce à Swagger et aux annotations OpenAPI, nous avons :
+
+Décrit les routes et leurs paramètres.
+Documenté les types de requêtes et de réponses.
+Ajouté des exemples pour faciliter les tests.
+Swagger permet ainsi une interaction simplifiée et un test efficace de l’API, tout en offrant une documentation claire et compréhensible.
+-Se connecter via la documentation
+=========>voir le cours
+========>Activer le module de Security de NelmioApiDocBundle
+Voici une reformulation de votre texte tout en préservant son contenu :
+
+Nous abordons ici la partie connexion. L'objectif est de récupérer les comptes préalablement enregistrés dans la base de données ainsi que le token généré au moment de la connexion. Ce token est essentiel pour sécuriser les interactions futures. Toutes les routes définies dans le contrôleur RestaurantController sont protégées par le firewall de Symfony, garantissant ainsi la sécurité des accès.
+
+Pour commencer, il est nécessaire d’effectuer une requête POST dans laquelle on envoie un username et un password. En retour, un token est généré et peut être utilisé pour récupérer les informations associées à l’utilisateur. Afin de simplifier, nous pouvons réutiliser le code déjà écrit pour login, en effectuant quelques ajustements. Par exemple, nous utilisons une route spécifique /api/login et modifions le corps de la requête pour y inclure les champs nécessaires (username et password). En réponse, un code HTTP 200 est retourné, accompagné d’un objet contenant le user, l’API token, et d’autres données utiles.
+
+Lorsqu'un utilisateur se connecte, il peut consulter, modifier son profil ou changer son mot de passe selon les données enregistrées dans la base. En utilisant Swagger, il est possible d’enregistrer automatiquement le token dans les headers pendant les tests de l’API, ce qui simplifie les interactions répétées avec les routes protégées. Le token est ajouté comme un champ x-auth-token dans les headers, fonctionnant de manière similaire à une session.
+
+Pour sécuriser l’API, une configuration est ajoutée dans le fichier de documentation OpenAPI, en utilisant un schéma de sécurité (securityScheme). Ce schéma est configuré pour l'authentification par token API, spécifiant le champ x-auth-token dans les headers. Une fois configuré, Swagger affiche un bouton Authorize permettant de saisir le token manuellement ou de l’importer directement. Cela permet ensuite de requêter les routes protégées, telles que celles liées à la création ou à la modification d'un restaurant.
+
+Lorsqu'une requête incorrecte est effectuée (par exemple, avec un token invalide ou des paramètres manquants), une erreur est retournée, comme une erreur HTTP 401 pour non autorisé. Ainsi, le firewall de Symfony agit comme un filtre pour empêcher les accès non autorisés. Cela garantit que seules les requêtes authentifiées peuvent interagir avec les routes sécurisées.
+
+En conclusion, cette configuration permet aux développeurs de tester facilement l'API via Swagger, sans avoir à recourir à des outils tiers comme Postman. De plus, elle offre une interface interactive pour créer, tester et interagir avec les différentes fonctionnalités de l’API en temps réel.
+======>Documenter notre CRUD
+Dans nos routes de contrôleur pour le restaurant, il est nécessaire de documenter celles-ci. Pour cela, on doit les ajouter dans Swagger. Comme d'habitude, on indique le type de requête HTTP (POST, GET, etc.), puis on documente les paramètres et les corps de requête, ainsi que les réponses attendues.
+
+Exemple : Création d’un restaurant
+Définir l'URL : On utilise /api/restaurant pour la création d'un restaurant.
+Requête POST : On envoie un corps de requête (request body) contenant les données du restaurant à créer, comme son nom et sa description.
+Réponses :
+200 (OK) : Si la requête réussit, on retourne un objet contenant les informations du restaurant créé (nom, description, etc.).
+400 (Bad Request) : Si des données sont invalides.
+500 (Server Error) : En cas d’erreur interne.
+Dans Swagger, on décrit :
+
+Les champs envoyés dans le corps de la requête (nom et description par exemple).
+Les différents statuts possibles dans les réponses, avec leurs descriptions et exemples. Par exemple, un code 201 indique que le restaurant a été créé avec succès, et on retourne l'objet correspondant.
+Exemple : Affichage d’un restaurant par son ID
+Définir l'URL : On utilise /api/restaurant/{id}.
+Requête GET : On envoie l’identifiant du restaurant en paramètre dans l’URL.
+Réponses :
+200 (OK) : L'objet du restaurant est retourné avec ses informations.
+404 (Not Found) : Si l’identifiant ne correspond à aucun restaurant.
+Dans Swagger :
+
+On décrit le paramètre id comme un entier (integer), obligatoire, envoyé dans l’URL.
+On détaille les champs retournés dans la réponse en cas de succès, par exemple le nom, la description et la date de création.
+Exemple : Mise à jour d’un restaurant
+Définir l'URL : On utilise /api/restaurant/{id}.
+Requête PUT : On envoie un corps de requête avec les nouvelles données (nom, description, etc.), en plus de l’identifiant en paramètre dans l’URL.
+Réponses :
+200 (OK) : Si les modifications ont été enregistrées.
+404 (Not Found) : Si l’identifiant ne correspond à aucun restaurant.
+400 (Bad Request) : Si des données invalides sont envoyées.
+Swagger inclut ici :
+
+Les descriptions des champs modifiables dans le corps de la requête.
+Les différents statuts et leurs significations.
+Exemple : Suppression d’un restaurant
+Définir l'URL : On utilise /api/restaurant/{id}.
+Requête DELETE : On supprime le restaurant correspondant à l’identifiant fourni.
+Réponses :
+204 (No Content) : Si le restaurant a été supprimé avec succès.
+404 (Not Found) : Si l’identifiant ne correspond à aucun restaurant.
+Pour Swagger, on décrit :
+
+Le paramètre id comme obligatoire.
+Les réponses possibles, avec leurs codes et descriptions.
+Il est important de veiller à ce que chaque documentation soit exhaustive afin de faciliter le travail des développeurs qui utilisent l'API. Cela inclut de fournir des exemples précis et complets pour chaque champ, ainsi que toutes les réponses possibles. Bon courage pour la documentation et l’intégration de ces routes dans Swagger !
+================================================================================
+D'autres explications
+Documentation des routes d’un contrôleur (exemple : restaurant)
+Lorsqu’on crée des routes dans un contrôleur, il est important de documenter celles-ci. Cela garantit une bonne compréhension de l'API, tant pour les développeurs que pour les utilisateurs de l’API. Cette documentation est ajoutée dans Swagger (ou un outil équivalent), en précisant :
+
+Le type de méthode HTTP utilisé (POST, GET, etc.).
+Les paramètres à envoyer, soit dans le corps de la requête (request body), soit dans l’URL (query parameters).
+Les différentes réponses possibles, avec leurs statuts HTTP et les données retournées.
+Exemple : Création d’un restaurant
+Route concernée : /api/restaurant
+
+Type de méthode : POST
+
+Objectif : créer un nouveau restaurant.
+
+Requête :
+Pour cette route, il est nécessaire d’envoyer des données dans le corps de la requête (request body) au format JSON. Les champs obligatoires sont :
+
+name : Nom du restaurant (chaîne de caractères).
+description : Description du restaurant (chaîne de caractères).
+Voici un exemple de corps de requête :
+
+json
+Copier le code
+{
+  "name": "Le P'tit Délice",
+  "description": "Un charmant restaurant familial."
+}
+Réponse attendue :
+Si l'objet est créé avec succès, on retourne une réponse avec :
+
+Statut HTTP : 201 Created.
+Corps de la réponse : L’objet restaurant créé, contenant les champs suivants :
+id (entier).
+name (chaîne).
+description (chaîne).
+created_at (date).
+Exemple de réponse :
+
+json
+Copier le code
+{
+  "id": 1,
+  "name": "Le P'tit Délice",
+  "description": "Un charmant restaurant familial.",
+  "created_at": "2024-11-26T12:00:00Z"
+}
+Exemple : Récupérer un restaurant spécifique
+Route concernée : /api/restaurant/{id}
+
+Type de méthode : GET
+
+Objectif : obtenir les informations d’un restaurant à partir de son ID.
+
+Requête :
+Cette route ne nécessite pas de corps de requête, mais un paramètre dynamique doit être passé dans l’URL :
+
+id : L’identifiant unique du restaurant (obligatoire).
+Exemple d’URL :
+
+bash
+Copier le code
+/api/restaurant/5
+Réponse attendue :
+Si l’objet est trouvé en base de données :
+
+Statut HTTP : 200 OK.
+Corps de la réponse : Les détails du restaurant.
+Si l’objet n’est pas trouvé :
+
+Statut HTTP : 404 Not Found.
+Corps de la réponse : Message d’erreur précisant que l’objet est introuvable.
+Exemple : Mettre à jour un restaurant
+Route concernée : /api/restaurant/{id}
+
+Type de méthode : PUT
+
+Objectif : mettre à jour les informations d’un restaurant.
+
+Requête :
+Cette route combine deux types de données :
+
+Un paramètre dynamique dans l’URL (id).
+Un corps de requête contenant les nouvelles données du restaurant à modifier.
+Exemple d’URL :
+
+bash
+Copier le code
+/api/restaurant/5
+Exemple de corps de requête :
+
+json
+Copier le code
+{
+  "name": "Le P'tit Délice - Nouvelle version",
+  "description": "Un restaurant familial modernisé."
+}
+Réponse attendue :
+Si l’objet est modifié avec succès :
+
+Statut HTTP : 204 No Content.
+Pas de contenu dans le corps de la réponse.
+Si l’objet à modifier n’est pas trouvé :
+
+Statut HTTP : 404 Not Found.
+Corps de la réponse : Message d’erreur précisant que l’objet est introuvable.
+Exemple : Supprimer un restaurant
+Route concernée : /api/restaurant/{id}
+
+Type de méthode : DELETE
+
+Objectif : supprimer un restaurant.
+
+Requête :
+Cette route nécessite uniquement le paramètre dynamique id dans l’URL.
+
+Réponse attendue :
+Si l’objet est supprimé avec succès :
+
+Statut HTTP : 204 No Content.
+Si l’objet à supprimer n’est pas trouvé :
+
+Statut HTTP : 404 Not Found.
+Corps de la réponse : Message d’erreur précisant que l’objet est introuvable.
+Points importants à vérifier dans la documentation Swagger :
+Ajout des annotations OpenAPI
+Chaque méthode doit être annotée avec les informations suivantes :
+
+Le type de méthode HTTP (POST, GET, PUT, DELETE).
+La description de l’action effectuée par la route.
+Les paramètres envoyés dans la requête.
+Les réponses possibles (statut HTTP, description et format des données retournées).
+Exemple pour un champ :
+
+yaml
+Copier le code
+name:
+  type: string
+  description: "Nom du restaurant"
+  example: "Le P'tit Délice"
+Description détaillée des réponses
+
+Indiquer les champs retournés par l’objet, avec leur type et leur description.
+Préciser les différents statuts possibles (200, 201, 404, etc.) pour chaque route.
+Paramètres dynamiques dans l’URL
+Pour les routes nécessitant des paramètres dans l’URL (par exemple, {id}), documentez clairement leur utilisation.
+
+Exemple :
+
+yaml
+Copier le code
+id:
+  type: integer
+  description: "Identifiant unique du restaurant"
+  example: 5
+Exhaustivité de la documentation
+Veillez à inclure tous les champs importants retournés par votre API, même si vous n’avez pas le temps de détailler chaque champ. Une documentation précise facilitera le travail des développeurs.
+
+Conclusion
+La documentation Swagger doit être aussi claire et complète que possible pour couvrir toutes les routes. Pour chaque route :
+
+Ajoutez les paramètres nécessaires.
+Spécifiez les réponses attendues, y compris les erreurs possibles.
+Rédigez des exemples pour illustrer les usages.
+===============================================================================================
+Avec les annotations
+Pré-requis
+Avant d’ajouter les annotations, assurez-vous que :
+
+Vous avez installé et configuré NelmioApiDocBundle dans votre projet Symfony.
+Les classes nécessaires pour les annotations sont bien importées dans vos fichiers PHP.
+
+namespace App\Controller\Api;
+
+use App\Entity\Restaurant;
+use App\Repository\RestaurantRepository;
+use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
+use OpenApi\Annotations as OA;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+
+#[Route('/api/restaurant', name: 'app_api_restaurant_')]
+class RestaurantController extends AbstractController
+{
+    public function __construct(
+        private EntityManagerInterface $manager,
+        private RestaurantRepository $repository,
+        private SerializerInterface $serializer,
+        private UrlGeneratorInterface $urlGenerator
+    ) {
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/restaurant",
+     *     summary="Créer un restaurant",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Données du restaurant à créer",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="name", type="string", example="Restaurant Le Gourmet"),
+     *             @OA\Property(property="description", type="string", example="Restaurant offrant des plats gastronomiques"),
+     *             @OA\Property(property="createdAt", type="string", format="date-time", example="2024-11-01T12:00:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Restaurant créé avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="name", type="string", example="Restaurant Le Gourmet"),
+     *             @OA\Property(property="description", type="string", example="Restaurant offrant des plats gastronomiques"),
+     *             @OA\Property(property="createdAt", type="string", format="date-time", example="2024-11-01T12:00:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request"
+     *     )
+     * )
+     */
+    #[Route(methods: ['POST'])]
+    public function new(Request $request): JsonResponse
+    {
+        $restaurant = $this->serializer->deserialize($request->getContent(), Restaurant::class, 'json');
+        $restaurant->setCreatedAt(new DateTimeImmutable());
+        $restaurant->setUpdatedAt(new DateTimeImmutable());
+
+        $this->manager->persist($restaurant);
+        $this->manager->flush();
+
+        $responseData = $this->serializer->serialize($restaurant, 'json');
+        $location = $this->urlGenerator->generate(
+            'app_api_restaurant_show',
+            ['id' => $restaurant->getId()],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+
+        return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/restaurant/{id}",
+     *     summary="Afficher un restaurant par ID",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du restaurant à afficher",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Restaurant trouvé avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="name", type="string", example="Restaurant Le Gourmet"),
+     *             @OA\Property(property="description", type="string", example="Restaurant offrant des plats gastronomiques"),
+     *             @OA\Property(property="createdAt", type="string", format="date-time", example="2024-11-01T12:00:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Restaurant non trouvé"
+     *     )
+     * )
+     */
+    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    public function show(int $id): Response
+    {
+        $restaurant = $this->repository->findOneBy(['id' => $id]);
+
+        if ($restaurant) {
+            $responseData = $this->serializer->serialize($restaurant, 'json');
+            return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+        }
+
+        return new JsonResponse(['data' => null], Response::HTTP_NOT_FOUND);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/restaurant/{id}",
+     *     summary="Mettre à jour un restaurant",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du restaurant à mettre à jour",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Données du restaurant à mettre à jour",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="name", type="string", example="Restaurant Le Gourmet"),
+     *             @OA\Property(property="description", type="string", example="Restaurant offrant des plats gastronomiques"),
+     *             @OA\Property(property="updatedAt", type="string", format="date-time", example="2024-11-01T12:00:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Restaurant mis à jour avec succès"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Restaurant non trouvé"
+     *     )
+     * )
+     */
+    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
+    public function edit(int $id, Request $request): JsonResponse
+    {
+        $restaurant = $this->repository->findOneBy(['id' => $id]);
+
+        if ($restaurant) {
+            $restaurant = $this->serializer->deserialize(
+                $request->getContent(),
+                Restaurant::class,
+                'json',
+                [AbstractNormalizer::OBJECT_TO_POPULATE => $restaurant]
+            );
+
+            $restaurant->setUpdatedAt(new DateTimeImmutable());
+            $this->manager->flush();
+
+            return new JsonResponse(['data' => null], Response::HTTP_NO_CONTENT);
+        }
+
+        return new JsonResponse(['data' => null], Response::HTTP_NOT_FOUND);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/restaurant/{id}",
+     *     summary="Supprimer un restaurant",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du restaurant à supprimer",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="Restaurant supprimé avec succès"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Restaurant non trouvé"
+     *     )
+     * )
+     */
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    public function delete(int $id): JsonResponse
+    {
+        $restaurant = $this->repository->findOneBy(['id' => $id]);
+
+        if ($restaurant) {
+            $this->manager->remove($restaurant);
+            $this->manager->flush();
+            return new JsonResponse(['data' => null], Response::HTTP_NO_CONTENT);
+        }
+
+        return new JsonResponse(['data' => null], Response::HTTP_NOT_FOUND);
+    }
+}
+
+Explications
+Annotations générales :
+
+Les annotations @Route définissent les chemins et méthodes HTTP directement compréhensibles par Symfony.
+Les annotations @OA\Post, @OA\Get, etc., décrivent les spécifications OpenAPI pour Swagger.
+Paramètres (@OA\Parameter) :
+Définissent les informations nécessaires pour chaque paramètre dynamique (par exemple, {id}).
+
+Corps de la requête (@OA\RequestBody) :
+Utilisé pour documenter les données envoyées dans le corps (exemple : POST).
+
+Réponses (@OA\Response) :
+Chaque réponse HTTP est documentée avec un code, une description, et parfois un exemple de contenu.
+En appliquant ces annotations, Swagger générera automatiquement une documentation interactive pour tester et comprendre vos API.
+Explications
+Annotations OpenAPI (@OA) :
+
+@OA\Post, @OA\Get, @OA\Put, et @OA\Delete décrivent les actions respectives.
+Chaque méthode documente ses paramètres, son corps de requête (si nécessaire), et ses réponses.
+Gestion des réponses :
+
+Les codes HTTP standard sont utilisés : 201 pour les créations, 200 pour les récupérations, 204 pour les mises à jour/suppressions réussies, et 404 pour les éléments non trouvés.
+Utilisation des tags :
+
+Le tag Restaurant permet de regrouper toutes les routes liées aux restaurants dans la documentation Swagger.
+Une fois intégré, exécutez votre projet et accédez à /api/doc (ou équivalent selon votre configuration Nelmio) pour voir votre documentation interactive.
+Points notables :
+Cohérence dans les annotations :
+
+@OA\Get, @OA\Post, @OA\Put, @OA\Delete sont utilisés.
+Les champs attendus et retournés sont décrits clairement.
+Gestion des réponses :
+
+Les réponses pour chaque cas (200, 201, 204, 404) sont bien documentées.
+Cela garantit une documentation claire dans Swagger UI pour toutes les méthodes du contrôleur.
+
+
+
+
+
+
+
 
 
 
