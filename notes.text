@@ -2225,6 +2225,209 @@ Gestion des réponses :
 
 Les réponses pour chaque cas (200, 201, 204, 404) sont bien documentées.
 Cela garantit une documentation claire dans Swagger UI pour toutes les méthodes du contrôleur.
+========================================================================================================================
+=======>Tester son application web
+-Installer Symfony Test Pack
+composer require --dev symfony/test-pack
+
+Exécution des tests :
+PHP Unit est utilisé pour exécuter des tests afin de vérifier si certaines parties de votre code sont fonctionnelles. Il s’intègre facilement à Symfony via le "phpunit-bridge", un pont intermédiaire permettant une meilleure intégration dans votre projet Symfony.
+
+Derrière, vous avez un pack similaire à "ORM pack" avec Doctrine. Ce "test pack" inclut PHP Unit, PHPUnit Bridge, et d’autres éléments pour simplifier l’intégration de tests dans l’écosystème Symfony.
+
+Installation et configuration :
+Lorsque vous lancez la commande d’installation via Composer, plusieurs fichiers sont créés ou mis à jour :
+
+Fichier .env.test :
+Contient de nouvelles variables d’environnement avec leurs valeurs respectives.
+Utilisé pour configurer une base de données spécifique à l’environnement de test, comme DB_RESTAURANT_TEST.
+Gestion des bases de données :
+Exemple de commande : php bin/console doctrine:database:create --env=test
+Crée une base de données en environnement de test.
+Gestion des environnements sensibles :
+Il est recommandé de ne pas inclure d’informations sensibles dans le fichier .env.test.
+
+Duplication possible en .env.test.local (non versionné par Git).
+Fichier de configuration PHPUnit (phpunit.xml):
+
+Configure le comportement des tests :
+Arrêter les tests en cas d’erreur.
+Définir les répertoires de recherche des tests.
+Gestion des fichiers versionnés :
+
+.gitignore :
+
+Inclut les fichiers à ignorer, comme les fichiers locaux .env.
+Mise à jour des fichiers Composer :
+
+Fichier composer.lock mis à jour pour refléter l’installation des composants nécessaires.
+Exécution des tests :
+Une fois le binaire installé, vous pouvez vérifier la version :
+
+Exemple : phpunit --version (version 9.6 installée).
+Les composants installés peuvent être vérifiés dans le fichier composer.lock. Symfony Flex a mis à jour les configurations nécessaires, permettant de démarrer les tests unitaires et fonctionnels.
+-Créer son premier test unitaire
+
+<?php
+
+namespace App\Tests\Entity;
+
+use App\Entity\User;
+use PHPUnit\Framework\TestCase;
+
+class UserTest extends TestCase
+{
+    public function testTheAutomaticApiTokenSettingWhenAnUserIsCreated(): void
+    {
+        $user = new User();
+        $this->assertNotNull($user->getApiToken());
+    }
+
+
+}
+EXPLICATION DU TesterDétails de l'exécution :
+Commande :
+
+bash
+Copier le code
+php bin/phpunit
+Cela lance PHPUnit à partir du dossier bin de votre projet.
+Version de PHPUnit :
+PHPUnit 9.6.21, ce qui est récent et compatible avec les versions modernes de PHP et Symfony.
+
+Résultats des tests :
+
+Tests exécutés : 1 test a été exécuté.
+Assertions : 1 assertion a été vérifiée avec succès.
+Statut : "OK" signifie qu’il n’y a eu aucune erreur ni échec.
+Ressources utilisées :
+
+Temps d’exécution : 0,076 seconde (très rapide).
+Mémoire utilisée : 8,00 Mo, ce qui est une consommation normale pour un test léger.
+UN AUTRE TESTE
+En plus de simplement comparer des valeurs entre elles, vous pouvez regarder si votre code retourne bien des exceptions pour une bonne gestion d’erreur :
+
+<?php
+
+namespace App\Tests\Entity;
+
+use App\Entity\User;
+use PHPUnit\Framework\TestCase;
+
+class UserTest extends TestCase
+{
+    public function testAnException(): void
+    {
+        $this->expectException(\TypeError::class);
+
+        $user = new User();
+        $user->setFirstName([10]);
+    }
+}
+RESULTAT
+Le résultat indique que le test a échoué. Voici une analyse et des étapes pour diagnostiquer et corriger le problème :
+
+1. Analyse de l'échec :
+Test exécuté : 1
+Assertions faites : 1
+Échecs : 1, donc l'assertion $this->assertNotNull($user->getApiToken()) a échoué.
+Cela signifie que getApiToken() retourne null, ce qui n'est pas attendu.
+===============================================================================================================
+Cela ressemble à une description détaillée des tests unitaires et fonctionnels en programmation, en particulier en PHP avec PHPUnit, ainsi qu'à un aperçu de l'écriture de tests pour un projet orienté objet.
+
+Points essentiels :
+Test unitaire :
+
+But : Tester une unité de code isolément (méthode ou classe).
+Exemple : Créer un objet, lui attribuer une valeur, puis vérifier que la méthode get retourne cette même valeur.
+Bonnes pratiques :
+Les tests doivent être répétables sans que le résultat ne change.
+Ils doivent être isolés de l'environnement externe.
+Les noms des méthodes de test doivent être explicites, souvent des phrases complètes en anglais (ex. testUserHasApiKey).
+Test fonctionnel :
+
+But : Tester une fonctionnalité complète, souvent liée à une User Story.
+Exemple : Simuler une connexion utilisateur avec saisie de login/mot de passe.
+Utilisation d'outils comme Selenium ou d'autres frameworks pour automatiser les interactions web.
+Exemples de tests avec PHPUnit :
+
+Vérification qu'une API Key est bien générée lors de la création d'un utilisateur.
+Vérification que l'utilisateur possède au moins un rôle ROLE_USER.
+Utilisation d'assertions comme assertNotNull() ou assertContains().
+Code Coverage (Couverture de code) :
+
+S'assurer que toutes les lignes/méthodes de l'application sont couvertes par des tests.
+Important dans les projets Open Source pour prouver la robustesse du code.
+Mocs et Stubs (simulations) :
+
+Simuler des objets ou des dépendances pour tester uniquement l'unité ciblée sans exécuter de vrai code externe.
+En résumé :
+Ce texte explique comment les tests unitaires et fonctionnels aident à garantir la fiabilité du code tout en facilitant la maintenance, la compréhension et la détection rapide des erreurs dans un projet, en particulier lors de contributions dans un projet open source ou en entreprise.
+=========================================================================================================
+TESTE fonctionnel
+Introduction
+Le texte aborde différentes méthodes de test fonctionnel en développement web, avec un focus particulier sur les tests des routes protégées par un firewall, les erreurs HTTP, et les outils permettant d'automatiser ces vérifications.
+
+I. Types de tests fonctionnels
+Tests de base
+
+Vérification des routes protégées par un firewall.
+Tests des erreurs HTTP (400, 403) et des routes publiques (login, registration) accessibles avec un code 200.
+Tests avancés avec outils spécialisés
+
+Utilisation de Behat pour écrire des scénarios de test en langage naturel :
+Exemple : « En tant qu'utilisateur, lorsque je souhaite me connecter, je rentre mes identifiants… »
+Tests dynamiques via Panther, un outil qui simule un navigateur pour exécuter des tests JavaScript et vérifier les réponses du serveur.
+II. Création des tests avec PHPUnit
+Configuration de la classe de test
+
+Création d'une classe nommée SmokeTest pour tester l'ensemble des routes.
+Héritage de la classe WebTestCase pour accéder aux assertions liées aux requêtes web.
+Création d'un client
+
+Chaque test crée un nouveau client via la méthode self::createClient().
+Exécution de requêtes sur des routes spécifiques :
+php
+Copier le code
+$client = self::createClient();
+$crawler = $client->request('GET', '/api/doc');
+$this->assertResponseIsSuccessful();
+III. Tests des routes protégées
+Accès non authentifié
+
+Vérification qu'une route protégée retourne bien une erreur 401 :
+php
+Copier le code
+$client->request('GET', '/api/protected');
+$this->assertResponseStatusCodeSame(401);
+Accès authentifié
+
+Simulation d'une connexion avec des identifiants valides :
+php
+Copier le code
+$client->request('POST', '/api/login', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+    'email' => 'toto@example.com',
+    'password' => 'password123'
+]));
+$this->assertResponseStatusCodeSame(200);
+IV. Gestion des utilisateurs de test
+Création d'utilisateurs en base de données de test
+
+Utilisation de commandes Doctrine pour migrer la base de données :
+bash
+Copier le code
+php bin/console doctrine:database:create --env=test
+php bin/console doctrine:migrations:migrate --env=test
+Ajout d'un utilisateur en dur
+
+Possibilité de créer un utilisateur directement dans la base de données pour les tests :
+php
+Copier le code
+$user = new User();
+$user->setEmail('toto@example.com');
+$user->setPassword('password123'); 
+// Hash du mot de passe à intégrer
+
 
 
 
